@@ -1,0 +1,214 @@
+TODO: tpr=0.5 -> fpr as a metric
+    - Should there be a choice between this and auc, or should I try to combine them.
+    - Actually, why not F-score? It seems to make more sense, as it looks at tpr=0.5, but also looks at fpr, tnr, fnr.
+
+TODO: Momentum as a parameter (READ: how they behave/conserve in keras with one-by-one epoch calls)
+    - Not using, one-by-one epoch calls anymore, due to learning decay as parameter.
+    - Since, different opt algorithms have different key-words for momentum (ex. beta_1, beta_2, momentum),
+    how should I handle it?
+        - That would require totally new dict for these parameters.
+    - maybe get_config() -> from config().
+    - Need to read more about how Optimizers work in keras, but they basically keep their config throughout the epochs
+        - Maybe there's a field which keeps epoch count.
+
+22/06: Learning decay as a parameter:
+    - Used Learning rate scheduler: still needs to change some it in __mutate in __Mutator.
+
+TODO: Check the size of the training dataset: https://github.com/36000/cnn_colorflow/blob/master/lcurve.py
+    - Need to clone from John
+    - 25/08 - Cloned, and tried to run it. Got to talk with John, about file, because cannot really understand it.
+
+22/06: Create log file support, instead of printing to console:
+    - Done, prints to do bottom of the file.
+
+22/06: No Two max_outs/dropouts in a row:
+    - Done, however without possibility of different configs (ex. always two convs in a row, before maxout).
+
+05/07: Use weights of the old network, while creating a new one.
+    - 23/06 - add layer - Testing how different layers behave.
+    - 28/06 - add layer - First approach, by creating three models, and then merging them.
+    - 29/06 - add layer - Deleted first approach.
+                            New Approach:
+                                1. Create a new model.
+                                2. Populate it with copies of old model.
+                                3. Set weights to ones from last model + new weights for a new layer.
+    - 01/07 - rmv layer - Added a function to remove a layer. Fails, if the layer is first one, or last one.
+                            That's not the case in this research though. (First layer is always Activation,
+                            last one is Dense w/ 2 neurons).
+    - 02/07 - add layer - Implemented into mutating.
+                            Fixed a bug when a Conv layer is added right before MaxOut before Flatten.
+                            Easy fix though, can be done more efficiently when copying weights.
+    - 03/07 - bth fn's  - Implemented remove into mutating.
+                            Changed __init__ of network, so that it's easier to make new mutation combinations.
+                            Made a function to find a weight index of first Dense layer.
+    - 04/07 - bth fn's  - Implemented a function to copy weights from a middle of next dense layer.
+    - 05/07 - bth fn's  - Fixed minor bugs, which resulted in incorrect shape.
+
+02-05/07: Make it Maxout safe, when adding new layer. AKA implement limit so that maxpool cannot be added if previous/next layer is maxpool:
+    - Fixed during problem above.
+
+04-06/07: Bug. Sometimes training pops out NaNs. Understand why, fix. It's not optimizer, unless there's something wrong with SGD/lr combination.
+    Nets:
+        1:
+            architecture: [((3, 3), 8), 128, 64]
+            optimizer   : Adam
+            activation  : relu
+            callbacks   : EarlyStopping/default
+        2:
+            architecture: [((7, 7), 16), ((5, 5), 8), 'max', 32, 32, 'drop0.30']
+            optimizer   : Adam
+            activation  : relu
+            callbacks   : EarlyStopping/default
+        3:
+            architecture: [((5, 5), 8), 'max', ((5, 5), 8), 'max', 64, 'drop0.30']
+            optimizer   : Adam
+            activation  : relu
+            callbacks   : EarlyStopping/default
+    Solved.
+
+    Note for future:
+        Basically using relu with cross_entropy doesn't work, since 0 is not in domain of cross_entropy, but in range of relu.
+        Thus, even though the last activation was tanh, the problem was 0, appearing sometimes in the range of nn(since 0 -> 0 in tanh).
+        Use SIGMOID as activation in last layer of nn, whenever possible.
+
+17/07-07/09: Bug. Nan in loss. Now in middle of the epoch. Maybe something with divergent optimizer.
+    Nets:
+        1 (17/07):
+            architecture: [((3, 3), 16), 64, 64, 'drop0.70']
+            optimizer   : Nadam, 0.001
+            activation  : relu
+            callbacks   : EarlyStopping/default
+        2 (26/08):
+            architecture: [((5, 5), 16), ((5, 5), 16), ((5, 5), 16), 'max', ((5, 5), 16), 64, 'drop0.70', 64, 'drop0.70', 64]
+            optimizer   : Nadam, 0.001
+            activation  : relu
+            callbacks   : EarlyStopping/default
+    - As of 22/08 it never happened after around 1/08, which hints that it is an extremely rare bug,
+        and may be connected to something that I already fixed on a way, or some bug in keras.
+    - 26/08 - Seems that it is not something with Nadam, with lr 0.001, but in need of investigation that.
+            - Not related to input data, as exactly same data sometimes results in nans, and sometimes does not
+            - Thus, it is probably, how weights are initialized.
+    - 06/09 - Run a NaN investigation program on all configurations in normal program. Since no pattern is found,
+                it would be better to implement quick fix, which after each epoch (batch?) would check if loss is NaN, and then, if so,
+                it would return weights to ones before epoch, and stop learning.
+    - 07/09 - Quick fix applied. It's called NaN looker, and if there is NaN in loss, the weights return to value before the epoch began.
+                A deeper study in what is the problem would be nice to do. Also try None values for lr.
+    - TODO: Upload NaN on github and make a stack exchange/keras github issue on it.
+
+17/07: Investigate why dropout at the end of arch is legal. It's shouldn't be.
+    - Done, added 'or j == len(architecture) - 1' in __init__ of network. Also added a test, in the test_network.
+
+17/07: Make probability distributions for different choices in __mutate.
+    - Done. Used numpy.random instead of random.
+
+TODO: Limit depth/number of weights. Include a strict weight # cap.
+    - 21/07 - Made a function to determine # of weights in the model.
+    - 22/07 - Implemented in add_layer method. However, it doesn't have strict weight # cap. (Only a loose one, before adding a new layer)
+    - 24/07 - Added a max depth requirement when generating a networks for first time.
+
+23/07: To prevent overfitting. Save weights before training, then compare scores after fitting. If it's worse, keep the weights.
+    - Done:
+        1. Modified __init__ to add previous score and previous weights.
+        2. Modified fit to update these variables.
+        3. Modified score to determine which weights to keep based on score.
+
+22-26/07: Split helper methods based on what they are helping with. Maybe even make a backend folder.
+    - 22/07 - Methods to mutate have different .py file.
+    - Migrated to a 'helpers' subdir.
+
+24/07: Split local variables to 2 files. One for files, one for constants.
+    - Done. Put in a subdir.
+
+24-25/07: Make comments for all the functions/methods
+    - 24/07 - commented all of network functions.
+    - 25/07 - comments on all of mutator, helpers_mutate functions.
+    - 14/08 - comments on all of helpers/get_file_names/log_save. However, added private helpers for helpers_mutate, which won't have comments.
+
+17/08-10/09: Improve the two parent mutation, so that it is somewhat random.
+    1. Instead of having random mutation, make a mutation depended on two parents, and make random choices based on them. Or combine it and use both (random and parents version).
+        - 17-18/08 -    1. Implemented and tested. Works, however is purely deterministic,
+                            which may be a problem with a specific net propagating through
+                            generations and overtaking population, with no randomness at all.
+                        2. Now supports only 2 parents, but should be relatively simple to generalize
+                            it to n parents through diagonal multi-parent crossover
+                            (section 2.3 of https://www.cs.vu.nl/~gusz/papers/PPSN1994-GAs-with-multiparent.pdf).
+                        3. This adds only one hyper-parameter to this program,
+                            which was meant to minimize # of choices by a human. So that's good.
+                        4. Make use of weights from the model which gives the conv_max_seq, and ones after dense_drop
+                            - 26/08 - Made for conv_max_seq
+                            - 10/09 - Done in all cases. Look at 'When copying over conv-max seq, make sure that...' TO-DO.
+    2. Created a second, much more random version of a parent mutation, however copying weights cannot be supported.
+        - 26/08 - 1. Only sequences are copied, not whole halves of networks.
+    - generalize it to n parent mutation?
+    - can it be deterministic, or still somewhat random?
+
+
+30/07-01/08: Add a sequence of conv_max, instead of adding one layer at a time.
+    - 30/07 - Basic function is written. Throws an error with copying over weights.
+    - 31/07 - 1. Fixed an error. Not yet implemented.
+              2. Added a mirror function of adding a dense layer, followed by a dropout.
+                    // Note: Even if it will be added at the end, dropout will be dropped, due to Network __init__ restrictions.
+              3. Added remove_conv_max function. Tested and working.
+    - 01/08 - 1. Added remove_dense_drop function. Tested and working.
+
+30/07: BUG. Cross-references are not working. in B: import A, in A: import B.
+    - Done with helpers_mutate and Network.
+
+14/08: Remake the code for helpers/mutator/network, so that non-random injections are supported.
+    - 14/08 - 1. Done for helpers_mutate. Checked Network, not needed.
+              2. Done for creating new Networks in Mutator.
+    - It can help debug the Nan in loss bug, which is extremely hard to reproduce (2-6h for single reproduction)
+    - Still need an idea on what to do with series of mutations (which ones are done), since they're random right now.
+        - That is not needed however, since one can easily do it by just calling series of functions
+
+16-17/08: BUG!! When making a copy_model in Network, still check for a dropout as a second to last layer, and if needed, remove.
+    - Done, created a wrap around method in helpers for cloning the model. Also added a constraint for 2 dropout in a row.
+
+17/08: When making a copy_model in Network, still check for a 2 maxpools in a row, and if needed, remove (CHANGE OF WEIGHTS SHAPE!!!).
+    - Done. Slightly modified bug above, and added support for maxpools, not only dropouts.
+
+16-17/08: BUG. Edge case with __insert_layer, with dropouts and dense layers being inserted at the end. Made an error with assert model and arch match.
+
+17/08: Updated test file, to make it easier to add new tests. Also added all tests for private mutation methods.
+
+22/08: Implement sequences in creating new network.
+    - Done, because of the beginning, each network starts with one random conv layer and one random dense layer.
+
+28/08: Make 2/3 modes of data loading:
+    - Done. If n_layers set to 0, then prepare data will just set whole dataset as x,y.
+
+26/08-10/09: When copying over conv-max seq, make sure that the weights of the seqs, are kept. In _parent_mutation.
+    - 26/08 - Done in parent mutation 1.
+    - 10/09 - Done for parent mutation 2. In Conv-Max kernel is kept, since the everything else is different.
+                In Dense-Drop, bias is kept, and maximum # of weights possible is copied (Since, it's number depends on shape of input, they do not always match exactly).
+
+25-26/08: Make a smart limit for number of maxpools.
+    - Made 2 properties, one for # of dimensions of input, one for maximal number of maxpool layers.
+    - Implemented.
+
+TODO: Make a support for 1-D input too. (by making flag inp_dim?) In order to add support for 1-D input prepare_data has to be modified.
+    - 01/09 - Implemented shape of input variable.
+    - 17/09 - Done some stuff. So nets can be trained, but fail on first evolution between first and second gen.
+
+02/09 Limit number of things printed under debug (make a third mode of debugging? or move some things into deep_debug)
+    - Done.
+
+01-02/09: Speed up Network creation (basically base it only on arch in mutator, and then make a Network out of it).
+    - 01/09 - Done, created add sequences based only on arch.
+    - 02/09 - Implemented in creating new networks.
+
+10-14/09: Reorganize code in different branch. Specifically mutator.
+    - 10/09 - Branched out arch-opt-reorganize, and started migrating methods as described in commits.
+    - 14/09 - Merge back to master. However, still need to implement function which can change train data each generation.
+                Also, there's a rare bug in the mutate_parent_2 with copying weights over sometimes.
+    - 14/09 - Part 2, Function which changes data over time is specified.
+
+TODO: README, and migrate to a different repo than main ColorFlow.
+
+TODO: Look for all github repos I was basing the code on.
+
+18/09: Bug in parent_mutation_2 with copying over weights. (Look at To-Do in Network)
+    - Nets:
+         1. Net 1: [((3, 3), 8), ((3, 3), 8), ((3, 3), 8), 'max', ((3, 3), 8), ((3, 3), 8), ((3, 3), 8), 'max', 128, 64]
+         2. Net 2: [((3, 3), 8), 64, 128, 'drop0.30', 32, 'drop0.70', 16, 'drop0.50', 64]
+    - Done
