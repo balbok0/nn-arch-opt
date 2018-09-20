@@ -33,8 +33,8 @@ n_train = 50000
 
 
 # Development variables
-debug = True
-deep_debug = True
+debug = False
+deep_debug = False
 
 
 # ----------------------------------------------------------------------------------------
