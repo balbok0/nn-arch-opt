@@ -538,20 +538,23 @@ class Network:
 
             nets = [base_net_1, base_net_2]  # type: List[Network]
 
-            print('')
-            print('Net 1: {}'.format(base_net_1.arch))
-            print('Net 2: {}'.format(base_net_2.arch))
-            print('New net: {}'.format(new_net.arch))
+            if debug:
+                print('\n_parent_mutate_2')
+                print('Net 1: {}'.format(base_net_1.arch))
+                print('Net 2: {}'.format(base_net_2.arch))
+                print('New net: {}\n'.format(new_net.arch))
 
             idx = 1
             for i in max_idxs:
                 a = nets[i[0]]
-                print('\tmax {}'.format(i))
+                if deep_debug:
+                    print('\tmax {}'.format(i))
                 for j in range(i[1] + 1, i[2] + 1):
-                    print('\t\t{}'.format(new_net.model.get_layer(index=idx)))
-                    print('\t\t{}'.format(a.model.get_layer(index=j)))
-                    print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=j).get_weights()[1]).shape))
-                    print('\t\trest {}'.format(np.array(new_net.model.get_layer(index=idx).get_weights()[0]).shape))
+                    if deep_debug:
+                        print('\t\t{}'.format(new_net.model.get_layer(index=idx)))
+                        print('\t\t{}'.format(a.model.get_layer(index=j)))
+                        print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=j).get_weights()[1]).shape))
+                        print('\t\trest {}\n'.format(np.array(new_net.model.get_layer(index=idx).get_weights()[0]).shape))
                     kernel_filter = a.model.get_layer(index=j).get_weights()[1]
                     new_weights = [new_net.model.get_layer(index=idx).get_weights()[0], kernel_filter]
                     new_net.model.get_layer(index=idx).set_weights(new_weights)
@@ -596,7 +599,6 @@ class Network:
         :return: A new, mutated Network.
         """
         from helpers import helpers_mutate
-        from program_variables.program_params import input_shape
 
         possible_changes = [
             helpers_mutate.add_dense_drop,

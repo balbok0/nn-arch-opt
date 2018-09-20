@@ -18,7 +18,7 @@ class Mutator(object):
         """
         Creates a new instance of Mutator.
 
-        :param population_size: Size of population of networks in this generator.
+        :param population_size: Size of population of networks in this generator. > 1
         :param starting_population: Optional. If you want to start from specified networks pass them here as list.
                 It can have any length, but if more: only first 'population_size' will be used, and if less
                 random networks will be generated to match 'population_size'.
@@ -27,7 +27,7 @@ class Mutator(object):
                 than pass in function which can do generate it. Make sure bool(generator_f) evaluates to true.
         :param generator_args: Optional. If generator_f you passed in requires some arguments pass them in as list.
         """
-        assert population_size > 0
+        assert population_size > 1
 
         generator_args = generator_args or []
         starting_population = starting_population or []
