@@ -462,9 +462,6 @@ class Network:
                     break
                 idx += 1
 
-            print('idx: {}'.format(idx))
-            print('remaining arch: {}'.format(base_net_1.arch[idx:]))
-
             for l in base_net_1.arch[idx:]:
                 if helpers.arch_type(l) == 'drop':
                     drop_seq_idx.append((0, drop_seq_start_idx, idx))
