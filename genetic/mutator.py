@@ -276,7 +276,8 @@ class Mutator(object):
         for net in new_nets[:population_size - len(self.networks)]:
             self.networks.append(net)
 
-    def __create_random_model(self) -> Network:
+    def __create_random_model(self):
+        # type: () -> Network
         """
         Creates a random model, based of parameters choices given in this Mutator.
 
