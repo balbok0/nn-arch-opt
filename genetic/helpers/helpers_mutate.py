@@ -4,7 +4,7 @@ import numpy as np
 from keras.callbacks import LearningRateScheduler
 from typing import *
 
-import helpers
+from helpers import helpers
 from network import Network
 from program_variables import program_params as const
 
@@ -531,7 +531,7 @@ def add_arch_dense_drop(base_arch):
     dense_params = random.choice(const.mutations.fget()['dense_size'])
     drop_params = 'drop%.2f' % random.choice(const.mutations.fget()['dropout'])
 
-    new_arch = base_arch.copy()
+    new_arch = base_arch[:]
 
     if idx >= len(new_arch):
         new_arch = new_arch[:idx] + [drop_params] + new_arch[idx:]
@@ -569,7 +569,7 @@ def add_arch_conv_max(base_arch,  # type: List[Union[str, int, Tuple[Tuple[int, 
     conv_params = (random.choice(const.mutations.fget()['kernel_size']),
                    random.choice(const.mutations.fget()['conv_filters']))
 
-    new_arch = base_arch.copy()
+    new_arch = base_arch[:]
 
     new_arch = new_arch[:idx] + ['max'] + new_arch[idx:]
 
