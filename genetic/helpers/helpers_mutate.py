@@ -4,7 +4,7 @@ import numpy as np
 from keras.callbacks import LearningRateScheduler
 from typing import *
 
-from helpers import helpers
+import helpers
 from network import Network
 from program_variables import program_params as const
 
