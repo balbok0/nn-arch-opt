@@ -5,7 +5,7 @@ It also depends on parameters which user can set on their own, but there's defau
 Parameters describe possible choices of number of neurons in a layer, callbacks etc.
 
 ## Requirements
-Required packages: Keras (on top of TensorFlow), numpy
+Required packages: Keras (on top of TensorFlow), numpy, sklearn, typing, h5py
 
 ## Basic usage
 In order to use: 

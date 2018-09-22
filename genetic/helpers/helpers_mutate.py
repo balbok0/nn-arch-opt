@@ -284,7 +284,8 @@ def add_dense_drop(base_net):
     return __add_dense_drop(base_net, idx_add, dense_params, drop_params)
 
 
-def __add_dense_drop(base_net: Network, idx: int, dense_params: int, drop_params: str) -> Network:
+def __add_dense_drop(base_net, idx, dense_params, drop_params):
+    # type: (Network, int, int, str) -> Network
     new_arch = base_net.arch
     new_model = base_net.model
 
@@ -387,7 +388,8 @@ def remove_conv_max(base_net):
     return __remove_conv_max(base_net, start, end)
 
 
-def __remove_conv_max(base_net: Network, idx_start: int, idx_end: int) -> Network:
+def __remove_conv_max(base_net, idx_start, idx_end):
+    # type: (Network, int, int) -> Network
     new_model = base_net.model
 
     if idx_start == 0:
