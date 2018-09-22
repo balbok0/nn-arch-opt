@@ -199,8 +199,9 @@ class Network:
                 return optimizers.Adadelta(lr=lr)
         raise AttributeError('Invalid name of optimizer given.')
 
-    def fit(self, x: Array_Type, y: Array_Type, validation_data: Tuple = None, validation_split: float = 0.,
-            epochs: int = 20, initial_epoch: int = 0, batch_size: int = 32, shuffle: str = 'batch', verbose: int = 0):
+    def fit(self, x, y, validation_data=None, validation_split=0.,
+            epochs=20, initial_epoch=0, batch_size=32, shuffle='batch', verbose=0):
+        # type: (Array_Type, Array_Type, Tuple, float, int, int, int, str, int) -> None
         """
         Trains a network on a training set.
         For parameters descriptions look at documentation for keras.models.Model.fit function.
@@ -265,13 +266,15 @@ class Network:
 
         return self.__score
 
-    def predict(self, x: List) -> List:
+    def predict(self, x):
+        # type: (List) -> List
         """
         Look at keras.models.Model.predict function docs.
         """
         return self.model.predict(x)
 
-    def save(self, file_path: str, overwrite: bool = True):
+    def save(self, file_path, overwrite=True):
+        # type: (str, bool) -> None
         """
         Given path, saves a network.
 
@@ -280,7 +283,7 @@ class Network:
         """
         self.model.save(filepath=file_path, overwrite=overwrite)
 
-    def __create_model(self) -> None:
+    def __create_model(self):
         """
         With already set architecture, translates it into actual keras model.
         Also compiles it, so that an actual model is ready to use.
@@ -339,7 +342,8 @@ class Network:
         self.model.add(Dense(units=output_shape.fget(), activation='sigmoid'))
         self.model.compile(optimizer=self.opt, loss='categorical_crossentropy', metrics=['accuracy'])
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self):
+        # type: () -> Dict[str, Any]
         """
         :return: A dictionary, which specifies configuration of this network. It contains:
 
@@ -614,7 +618,6 @@ class Network:
         probabilities = [11, 7, 3, 3, 1]
 
         if len(input_shape.fget()) > 2:
-
             possible_changes += [
                 helpers_mutate.add_conv_max,
                 helpers_mutate.remove_conv_max,

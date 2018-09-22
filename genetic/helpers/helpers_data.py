@@ -63,7 +63,8 @@ def __get_masks(x_shape, y):
     return indexes_x, indexes_y
 
 
-def prepare_data(dataset: str='colorflow', first_time: bool=True) -> Tuple:
+def prepare_data(dataset='colorflow', first_time=True):
+    # type: (str, bool) -> Tuple
     """
     Prepares a dataset of a choice, and returns it in form of pair of tuples, containing training and validation
     data-sets.

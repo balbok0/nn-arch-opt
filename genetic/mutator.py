@@ -13,8 +13,14 @@ from program_variables import program_params as const
 
 
 class Mutator(object):
-    def __init__(self, population_size: int=10, starting_population: List[Network]=None, params: Dict=None,
-                 generator_f=None, generator_args: List=None):
+    def __init__(self,
+                 population_size=10,  # type: int
+                 starting_population=None,  # type: List[Network]
+                 params=None,  # type: Dict
+                 generator_f=None,  # type: function
+                 generator_args=None  # type: Union[List, Dict]
+                 ):
+        # type: (...) -> None
         """
         Creates a new instance of Mutator.
 
@@ -47,12 +53,23 @@ class Mutator(object):
         if generator_f:
             self.set_dataset_generator(generator_f, generator_args)
 
-    def evolve(
-            self, x: Array_Type, y: Array_Type, validation_data: Tuple=None, validation_split: float=None,
-            use_generator: bool=False, generations: int=20,
-            save_each_generation_best: bool=True, saving_dir: str=None, save_best: bool=True,
-            epochs: int=2, initial_epoch: int=1, batch_size: int=32, shuffle: str='batch', verbose: int=0
-    ) -> Model:
+    def evolve(self,
+               x,  # type: Array_Type
+               y,  # type: Array_Type
+               validation_data=None,  # type: Tuple
+               validation_split=None,  # type: float
+               use_generator=False,  # type: bool
+               generations=20,  # type: int
+               save_each_generation_best=True,  # type: bool
+               saving_dir=None,  # type: str
+               save_best=True,  # type: bool
+               epochs=2,  # type: int
+               initial_epoch=0,  # type: int
+               batch_size=32,  # type: int
+               shuffle='batch',  # type: str
+               verbose=0  # type: int
+               ):
+        # type: (...) -> Model
         """
         Main function of Mutator.\n
         Trains neural networks, and evolves them through generations, in order to find architecture, optimizer, etc.
@@ -121,8 +138,9 @@ class Mutator(object):
             log_save.print_message('Starting training for generation %d' % (i + 1))
 
             for _, net in enumerate(self.networks):
-                if verbose == 1:
+                if verbose > 0:
                     print('Network fit {}/{}'.format(_ + 1, len(self.networks)))
+                    print(epochs)
                 net.fit(x, y, validation_data, validation_split,
                         epochs=epochs, initial_epoch=initial_epoch,
                         batch_size=batch_size, shuffle=shuffle, verbose=verbose)
@@ -231,7 +249,7 @@ class Mutator(object):
         tmp_nets = self.networks
 
         if len(const.input_shape.fget()) > 2:
-            for _ in range(int(np.ceil((population_size - len(self.networks))/2))):
+            for _ in range(int(np.ceil((population_size - len(self.networks)) / 2))):
                 if len(tmp_nets) >= 2:
                     pair = np.random.choice(tmp_nets, size=2, replace=False, p=tmp_p)
                     for i_pair in called_pairs:
@@ -270,7 +288,7 @@ class Mutator(object):
             architecture = [random.choice(const.mutations.fget()['dense_size'])]
         else:
             architecture = [(random.choice(const.mutations.fget()['kernel_size']),
-                            random.choice(const.mutations.fget()['conv_filters'])),
+                             random.choice(const.mutations.fget()['conv_filters'])),
                             random.choice(const.mutations.fget()['dense_size'])]
 
         n_layers = 2  # since there's always at least one conv, dense layer.

@@ -9,7 +9,8 @@ from network import Network
 from program_variables import program_params as const
 
 
-def add_layer(base_net: Network) -> Network:
+def add_layer(base_net):
+    # type: (Network) -> Network
     """
     Creates a copy of given Network, but with added layer, randomly derived from given parameters.
 
@@ -52,7 +53,8 @@ def add_layer(base_net: Network) -> Network:
     return _add_layer(base_net, layer_name, layer_idx)
 
 
-def _add_layer(base_net: Network, layer_name: Union[int, str, Tuple[Tuple[int], int]], layer_idx: int) -> Network:
+def _add_layer(base_net, layer_name, layer_idx):
+    # type: (Network, Union[int, str, Tuple[Tuple[int], int]], int) -> Network
     new_arch = base_net.arch[:layer_idx] + [layer_name] + base_net.arch[layer_idx:]
 
     layer_idx += 1  # difference between net.arch and actual architecture. - First activation layer.
@@ -75,7 +77,8 @@ def _add_layer(base_net: Network, layer_name: Union[int, str, Tuple[Tuple[int], 
     )
 
 
-def remove_layer(base_net: Network) -> Network:
+def remove_layer(base_net):
+    # type: (Network) -> Network
     """
     Creates a copy of given Network, but with removed layer, at a random index.
 
@@ -101,7 +104,8 @@ def remove_layer(base_net: Network) -> Network:
     )
 
 
-def change_opt(base_net: Network) -> Network:
+def change_opt(base_net):
+    # type: (Network) -> Network
     """
     Creates a copy of given Network, but with changed optimizer on which it will be trained.
 
@@ -118,7 +122,8 @@ def change_opt(base_net: Network) -> Network:
     )
 
 
-def change_activation(base_net: Network) -> Network:
+def change_activation(base_net):
+    # type: (Network) -> Network
     """
     Creates a copy of given Network, but with changed activation function on each layer specified in architecture.
 
@@ -134,7 +139,8 @@ def change_activation(base_net: Network) -> Network:
     )
 
 
-def change_lr_schedule(base_net: Network) -> Network:
+def change_lr_schedule(base_net):
+    # type: (Network) -> Network
     """
     Creates a copy of given Network, but with changed callbacks (Learning Rate Scheduler specifically)
     on which it will be trained.
@@ -160,7 +166,8 @@ def change_lr_schedule(base_net: Network) -> Network:
     )
 
 
-def add_conv_max(base_net: Network, conv_num: int = 3) -> Network:
+def add_conv_max(base_net, conv_num=3):
+    # type: (Network, int) -> Network
     """
     Adds a sequence of Convolutional layers, followed by MaxPool layer to a copy of a given Network.
 
@@ -201,7 +208,8 @@ def add_conv_max(base_net: Network, conv_num: int = 3) -> Network:
     return __add_conv_max(base_net, idx_add, conv_num, conv_params)
 
 
-def __add_conv_max(base_net: Network, idx: int, conv_num: int, conv_params: Tuple[Tuple[int, int], int]) -> Network:
+def __add_conv_max(base_net, idx, conv_num, conv_params):
+    # type: (Network, int, int, Tuple[Tuple[int, int], int]) -> Network
     new_arch = base_net.arch
     new_model = base_net.model
 
@@ -238,7 +246,8 @@ def __add_conv_max(base_net: Network, idx: int, conv_num: int, conv_params: Tupl
     )
 
 
-def add_dense_drop(base_net: Network) -> Network:
+def add_dense_drop(base_net):
+    # type: (Network) -> Network
     """
     Adds a sequence of Dense layer, followed by Dropout layer to a copy of a given Network.
 
@@ -334,7 +343,8 @@ def __add_dense_drop(base_net: Network, idx: int, dense_params: int, drop_params
     )
 
 
-def remove_conv_max(base_net: Network) -> Network:
+def remove_conv_max(base_net):
+    # type: (Network) -> Network
     """
     Removes a sequence of Convolution layers, followed by MaxOut layer, in a given Network.\n
     If no such sequence is found, then it adds one, instead of removing it.
@@ -415,7 +425,8 @@ def __remove_conv_max(base_net: Network, idx_start: int, idx_end: int) -> Networ
     )
 
 
-def remove_dense_drop(base_net: Network) -> Network:
+def remove_dense_drop(base_net):
+    # type: (Network) -> Network
     """
     Removes a sequence of Dense layer, followed by Dropout layer/layers, in a given Network.\n
     If no such sequence is found, then it adds one (Dropout + Dense), instead of removing it.
@@ -444,7 +455,8 @@ def remove_dense_drop(base_net: Network) -> Network:
     return __remove_dense_drop(base_net, drop_arch_idx)
 
 
-def __remove_dense_drop(base_net: Network, drop_idx: int) -> Network:
+def __remove_dense_drop(base_net, drop_idx):
+    # type: (Network, int) -> Network
     new_model = base_net.model
     new_arch = base_net.arch
 
@@ -502,8 +514,8 @@ def __remove_dense_drop(base_net: Network, drop_idx: int) -> Network:
     )
 
 
-def add_arch_dense_drop(base_arch: List[Union[str, int, Tuple[Tuple[int, int], int]]]) \
-        -> List[Union[str, int, Tuple[Tuple[int, int], int]]]:
+def add_arch_dense_drop(base_arch):
+    # type: (List[Union[str, int, Tuple[Tuple[int, int], int]]]) -> List[Union[str, int, Tuple[Tuple[int, int], int]]]
     drop_idx = []
     idx = 0
     for l in base_arch:
@@ -534,8 +546,10 @@ def add_arch_dense_drop(base_arch: List[Union[str, int, Tuple[Tuple[int, int], i
     return new_arch
 
 
-def add_arch_conv_max(base_arch: List[Union[str, int, Tuple[Tuple[int, int], int]]], conv_num: int = 3) \
-        -> List[Union[str, int, Tuple[Tuple[int, int], int]]]:
+def add_arch_conv_max(base_arch,  # type: List[Union[str, int, Tuple[Tuple[int, int], int]]]
+                      conv_num=3  # type int
+                      ):
+    # type: (...) -> List[Union[str, int, Tuple[Tuple[int, int], int]]]
     if len(const.input_shape.fget()) < 3:
         return add_arch_dense_drop(base_arch)
 

@@ -440,7 +440,8 @@ def is_running_gpu():
     return 'CPU' in [x.device_type for x in device_lib.list_local_devices()]
 
 
-def find_first_drop_dense_arch(arch: List) -> int:
+def find_first_drop_dense_arch(arch):
+    # type: (List) -> int
     for idx, i in enumerate(arch):
         if arch_type(i) in ['dense', 'drop']:
             return idx
@@ -452,10 +453,12 @@ class NaNSafer(Callback):
         Callback.__init__(self)  # super call in such way for compatibility reasons between python 2 and 3
         self.weights = None
 
-    def on_epoch_begin(self, epoch: int, logs: dict=None):
+    def on_epoch_begin(self, epoch, logs=None):
+        # type: (int, dict) -> None
         self.weights = self.model.get_weights()
 
-    def on_batch_end(self, batch: int, logs: dict=None):
+    def on_batch_end(self, batch, logs=None):
+        # type: (int, dict) -> None
         logs = logs or {}
         if 'loss' in logs.keys():
             if 'nan' == str(logs['loss']):
