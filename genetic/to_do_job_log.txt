@@ -212,3 +212,5 @@ TODO: Look for all github repos I was basing the code on.
          1. Net 1: [((3, 3), 8), ((3, 3), 8), ((3, 3), 8), 'max', ((3, 3), 8), ((3, 3), 8), ((3, 3), 8), 'max', 128, 64]
          2. Net 2: [((3, 3), 8), 64, 128, 'drop0.30', 32, 'drop0.70', 16, 'drop0.50', 64]
     - Done
+
+TODO: Some recursion problem, remove_conv_max, and add_conv_max get looped.

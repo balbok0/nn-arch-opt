@@ -153,12 +153,14 @@ class Network:
 
         :param opt_name: Name of optimizer to use.
                 Legal arguments are:
-                #. adam
-                #. nadam
-                #. rmsprop
-                #. adamax
-                #. adagrad
-                #. adadelta
+
+        * adam
+        * nadam
+        * rmsprop
+        * adamax
+        * adagrad
+        * adadelta
+
         :param lr: Learning rate of an optimizer.
         :return: A new optimizer based on given name and learning rate.
         """
@@ -339,12 +341,14 @@ class Network:
 
     def get_config(self) -> Dict[str, Any]:
         """
-        :return: A dictionary, which specifies configuration of this network. It contains:\n
-            #. architecture - a list of layers in a network.
-            #. optimizer - on which this network was trained.
-            #. activation - activation function on all of layers of this network.
-            #. score - score of this network, if function score was called beforehand. 0 otherwise.
-            #. callbacks - list of callbacks used while training this network.
+        :return: A dictionary, which specifies configuration of this network. It contains:
+
+        #. architecture - a list of layers in a network.
+        #. optimizer - on which this network was trained.
+        #. activation - activation function on all of layers of this network.
+        #. score - score of this network, if function score was called beforehand. 0 otherwise.
+        #. callbacks - list of callbacks used while training this network.
+
         """
         opt_name = str(self.opt.__class__)
         opt_name = opt_name[opt_name.index(".") + 1:]
@@ -554,7 +558,9 @@ class Network:
                         print('\t\t{}'.format(new_net.model.get_layer(index=idx)))
                         print('\t\t{}'.format(a.model.get_layer(index=j)))
                         print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=j).get_weights()[1]).shape))
-                        print('\t\trest {}\n'.format(np.array(new_net.model.get_layer(index=idx).get_weights()[0]).shape))
+                        print('\t\trest {}\n'.format(
+                            np.array(new_net.model.get_layer(index=idx).get_weights()[0]).shape)
+                        )
                     kernel_filter = a.model.get_layer(index=j).get_weights()[1]
                     new_weights = [new_net.model.get_layer(index=idx).get_weights()[0], kernel_filter]
                     new_net.model.get_layer(index=idx).set_weights(new_weights)

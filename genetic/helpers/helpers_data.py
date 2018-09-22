@@ -65,24 +65,41 @@ def __get_masks(x_shape, y):
 
 def prepare_data(dataset: str='colorflow', first_time: bool=True) -> Tuple:
     """
-    Prepares a dataset of a choice, and returns it in form of pair of tuples, containg training and validation datasets.
+    Prepares a dataset of a choice, and returns it in form of pair of tuples, containing training and validation
+    data-sets.
 
-    :param dataset: Name of the dataset, valid arguments are: <br>
-            #. cifar10   - 'cifar' or 'cifar10'
-            #. mnist     - 'mnist'
-            #. colorflow - 'colorflow', 'this', 'project'
-            #. testing   - 'testing' - a smaller colorflow dataset, for debug purposes.
+    :param dataset: Name of the dataset, valid arguments are:
+
+    * cifar10   - 'cifar' or 'cifar10'
+    * mnist     - 'mnist'
+    * testing   - 'testing' - a smaller colorflow dataset, for debug purposes.
+    * colorflow - 'colorflow', 'cf', followed by '-', and name of more specific dataset from:
+        * Signal vs. Background:
+           * 'Herwig Dipole'
+           * 'Herwig Angular'
+           * 'Sherpa'
+           * 'Pythia Standard'
+           * 'Pythia Vincia'
+        * Signal 1 vs. Signal 2:
+           * 'Hgg_vs_Hqq'
+
+        If none are given default is 'Herwig Angular'.
+
     :param first_time: Whether a validation dataset should be returned too, or not.
-                        If called for the first time, should be 'True'. If not, can be avoided for better performence.
+        If called for the first time, should be 'True'.
+        If not, can be avoided for better performance.
+
     :return: (x_train, y_train), (x_val, y_val),
-                each being of type np.ndarray, or HDF5Matrix, depending on memory space.
-                x_train - is a input to nn, on which neural network can be trained.
-                y_train - are actual results, which compared to output of nn, allow it to learn information about data.
-                x_val   - is a input to nn, on which nn can be checked how well it performs.
-                y_val   - are actual results, agaist which nn can be checked how well it performs.
+               each being of type np.ndarray, or HDF5Matrix, depending on memory space.
+
+    * x_train - is a input to nn, on which neural network can be trained.
+    * y_train - are actual results, which compared to output of nn, allow it to learn information about data.
+    * x_val   - is a input to nn, on which nn can be checked how well it performs.
+    * y_val   - are actual results, against which nn can be checked how well it performs.
+
     """
     if isinstance(dataset, str):
-        name = dataset.lower()
+        name = dataset.lower().split('-')[0]
 
         # Needed for typing.
         (_, _), (x_val, y_val) = (None, None), (None, None)  # type: Array_Type
@@ -114,7 +131,7 @@ def prepare_data(dataset: str='colorflow', first_time: bool=True) -> Tuple:
             x_train = x_train[:2500, ...]
             x_val = x_val[:2500, ...]
 
-        elif name in ['project', 'this', 'colorflow']:
+        elif name in ['cf', 'colorflow']:
             from get_file_names import get_ready_path
 
             import psutil
@@ -123,7 +140,8 @@ def prepare_data(dataset: str='colorflow', first_time: bool=True) -> Tuple:
             from keras.utils.io_utils import HDF5Matrix
             from keras.utils.np_utils import to_categorical
 
-            fname = get_ready_path('Herwig Angular')
+            fname = dataset.split('-')[1].strip() if len(dataset.split('-')) > 1 else 'Herwig Angular'
+            fname = get_ready_path(fname)
 
             # Data loading
             with h5.File(fname) as hf:
@@ -170,6 +188,14 @@ def prepare_data(dataset: str='colorflow', first_time: bool=True) -> Tuple:
                 else:  # data too big for memory.
                     x_val = HDF5Matrix(fname, 'val/x')
                     y_val = to_categorical(HDF5Matrix(fname, 'val/y'), n_classes)
+
+                p = np.random.permutation(len(y_val))
+                y_val = y_val[p]
+                x_val = x_val[p]
+
+            p = np.random.permutation(len(y_train))
+            y_train = y_train[p]
+            x_train = x_train[p]
 
         else:
             raise AttributeError('Invalid name of dataset.')

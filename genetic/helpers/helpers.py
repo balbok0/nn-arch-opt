@@ -82,7 +82,7 @@ def assert_model_arch_match(model, arch):
     Asserts that given architecture and given model match. Specific for THIS Network implementation!
 
     :param model: A keras neural network model, which architecture is to be compared.
-    :param arch: A list containing descriptions of layers to be comapered.
+    :param arch: A list containing descriptions of layers to be compared.
     :return: True, if both arguments match, False otherwise.
     """
     arch_idx = 0
@@ -115,7 +115,7 @@ def find_first_dense(model):
     :param model: A model in which index of the first dense layer is to be found.
     :return: Tuple containing two ints: <br>
                (index of first dense layer in layer count, index of first dense layer in weights count). <br>
-               Returns (None, None) if no dense layer exisits in the model.
+               Returns (None, None) if no dense layer exists in the model.
     """
     layer_idx = 0
     weight_idx = 0
@@ -391,7 +391,7 @@ def arch_to_layer(layer, activation):
 def layer_to_arch(layer):
     # type: (Layer) -> list
     """
-    Given a keras layer returns an architecture layer decription. Specific to THIS Network implementation.
+    Given a keras layer returns an architecture layer description. Specific to THIS Network implementation.
 
     :param layer: Keras layer, which is to be translated to architecture layer description.
     :return: An architecture layer description based on given layer.

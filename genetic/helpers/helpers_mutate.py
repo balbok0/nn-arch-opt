@@ -160,7 +160,7 @@ def change_lr_schedule(base_net: Network) -> Network:
     )
 
 
-def add_conv_max(base_net: Network, conv_num: int=3) -> Network:
+def add_conv_max(base_net: Network, conv_num: int = 3) -> Network:
     """
     Adds a sequence of Convolutional layers, followed by MaxPool layer to a copy of a given Network.
 
@@ -174,6 +174,12 @@ def add_conv_max(base_net: Network, conv_num: int=3) -> Network:
         return add_dense_drop(base_net)
 
     if not helpers.can_add_max_number(base_net.arch):
+        if const.debug:
+            print('')
+            print('add_conv_max - before calling remove_conv_max')
+            print('Arch: {}'.format(base_net.arch))
+            print('Max l limit: {}'.format(const.max_layers_limit.fget()))
+            print('')
         return remove_conv_max(base_net)
 
     max_idx = [0]
@@ -463,7 +469,7 @@ def __remove_dense_drop(base_net: Network, drop_idx: int) -> Network:
             print('')
         new_model = helpers._remove_layer(new_model, drop_idx + net_offset + 1)
         new_model = helpers._remove_layer(new_model, drop_idx + net_offset)
-        new_arch = new_arch[:drop_idx-1] + new_arch[drop_idx+1:]
+        new_arch = new_arch[:drop_idx - 1] + new_arch[drop_idx + 1:]
 
     elif helpers.arch_type(base_net.arch[drop_idx - 1]) == 'drop':  # Previous layer is dropout.
         if const.deep_debug:
@@ -496,7 +502,7 @@ def __remove_dense_drop(base_net: Network, drop_idx: int) -> Network:
     )
 
 
-def add_arch_dense_drop(base_arch: List[Union[str, int, Tuple[Tuple[int, int], int]]])\
+def add_arch_dense_drop(base_arch: List[Union[str, int, Tuple[Tuple[int, int], int]]]) \
         -> List[Union[str, int, Tuple[Tuple[int, int], int]]]:
     drop_idx = []
     idx = 0
@@ -528,9 +534,8 @@ def add_arch_dense_drop(base_arch: List[Union[str, int, Tuple[Tuple[int, int], i
     return new_arch
 
 
-def add_arch_conv_max(base_arch: List[Union[str, int, Tuple[Tuple[int, int], int]]], conv_num: int=3)\
+def add_arch_conv_max(base_arch: List[Union[str, int, Tuple[Tuple[int, int], int]]], conv_num: int = 3) \
         -> List[Union[str, int, Tuple[Tuple[int, int], int]]]:
-
     if len(const.input_shape.fget()) < 3:
         return add_arch_dense_drop(base_arch)
 
