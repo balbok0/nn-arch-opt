@@ -48,12 +48,14 @@ _output_shape = 0
 
 # Properties. DO NOT CHANGE.
 @property
-def max_layers_limit() -> int:
+def max_layers_limit():
+    # type: () -> int
     return _max_limit
 
 
 @max_layers_limit.setter
-def max_layers_limit(val: int):
+def max_layers_limit(val):
+    # type: (int) -> None
     global _max_limit
     if _max_limit < val:
         import warnings
@@ -63,12 +65,14 @@ def max_layers_limit(val: int):
 
 
 @property
-def input_shape() -> List[int]:
+def input_shape():
+    # type: () -> List[int]
     return _input_shape
 
 
 @input_shape.setter
-def input_shape(val: List[int]):
+def input_shape(val):
+    # type: (List[int]) -> None
     import numpy as np
     global _input_shape
     _input_shape = val
@@ -78,12 +82,14 @@ def input_shape(val: List[int]):
 
 
 @property
-def output_shape() -> int:
+def output_shape():
+    # type: () -> int
     return _output_shape
 
 
 @output_shape.setter
-def output_shape(val: int):
+def output_shape(val):
+    # type: (int) -> None
     global _output_shape
     _output_shape = val
 
