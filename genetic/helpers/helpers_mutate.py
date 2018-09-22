@@ -4,7 +4,7 @@ import numpy as np
 from keras.callbacks import LearningRateScheduler
 from typing import *
 
-from helpers import helpers
+import helpers_other
 from network import Network
 from program_variables import program_params as const
 
@@ -21,7 +21,7 @@ def add_layer(base_net):
 
     possible_layers = {}
 
-    if helpers.get_number_of_weights(base_net.model) > const.max_n_weights != 0 or \
+    if helpers_other.get_number_of_weights(base_net.model) > const.max_n_weights != 0 or \
             len(base_net.arch) + 1 > const.max_depth != 0:
         remove_layer(base_net)
 
@@ -32,16 +32,16 @@ def add_layer(base_net):
         possible_layers['dense'] = random.choice(const.mutations.fget()['dense_size'])
     else:
         prev_layer = base_net.arch[layer_idx - 1]
-        prev_type = helpers.arch_type(prev_layer)
+        prev_type = helpers_other.arch_type(prev_layer)
         next_layer = base_net.arch[layer_idx]
 
         if prev_type in ['conv', 'max']:
             possible_layers['conv'] = (random.choice(const.mutations.fget()['kernel_size']),
                                        random.choice(const.mutations.fget()['conv_filters']))
-            if not prev_type == 'max' and helpers.can_add_max_number(base_net.arch):
+            if not prev_type == 'max' and helpers_other.can_add_max_number(base_net.arch):
                 possible_layers['max'] = 'max'
 
-        check_if_flat = lambda x: helpers.arch_type(x) in ['dense', 'drop']
+        check_if_flat = lambda x: helpers_other.arch_type(x) in ['dense', 'drop']
 
         if check_if_flat(next_layer):
             possible_layers['dense'] = random.choice(const.mutations.fget()['dense_size'])
@@ -58,7 +58,7 @@ def _add_layer(base_net, layer_name, layer_idx):
     new_arch = base_net.arch[:layer_idx] + [layer_name] + base_net.arch[layer_idx:]
 
     layer_idx += 1  # difference between net.arch and actual architecture. - First activation layer.
-    if helpers.arch_type(layer_name) in ['dense', 'drop']:
+    if helpers_other.arch_type(layer_name) in ['dense', 'drop']:
         layer_idx += 1  # difference between net.arch and actual architecture. - Flatten layer.
 
     if const.debug:
@@ -70,7 +70,7 @@ def _add_layer(base_net, layer_name, layer_idx):
 
     return Network(
         architecture=new_arch,
-        copy_model=helpers._insert_layer(base_net.model, helpers.arch_to_layer(layer_name, base_net.act), layer_idx),
+        copy_model=helpers_other._insert_layer(base_net.model, helpers_other.arch_to_layer(layer_name, base_net.act), layer_idx),
         opt=base_net.opt,
         activation=base_net.act,
         callbacks=base_net.callbacks
@@ -92,12 +92,12 @@ def remove_layer(base_net):
     new_arch = base_net.arch[:layer_idx] + base_net.arch[layer_idx + 1:]
 
     layer_idx += 1  # difference between net.arch and actual architecture. - First activation layer.
-    if helpers.arch_type(layer_name) in ['dense', 'drop'] and len(const.input_shape.fget()) > 2:
+    if helpers_other.arch_type(layer_name) in ['dense', 'drop'] and len(const.input_shape.fget()) > 2:
         layer_idx += 1  # difference between net.arch and actual architecture. - Flatten layer.
 
     return Network(
         architecture=new_arch,
-        copy_model=helpers._remove_layer(base_net.model, layer_idx),
+        copy_model=helpers_other._remove_layer(base_net.model, layer_idx),
         opt=base_net.opt,
         activation=base_net.act,
         callbacks=base_net.callbacks
@@ -180,7 +180,7 @@ def add_conv_max(base_net, conv_num=3):
     if len(const.input_shape.fget()) < 3:
         return add_dense_drop(base_net)
 
-    if not helpers.can_add_max_number(base_net.arch):
+    if not helpers_other.can_add_max_number(base_net.arch):
         if const.debug:
             print('')
             print('add_conv_max - before calling remove_conv_max')
@@ -192,7 +192,7 @@ def add_conv_max(base_net, conv_num=3):
     max_idx = [0]
     idx = 1
     for l in base_net.arch:
-        if helpers.arch_type(l) == 'max':
+        if helpers_other.arch_type(l) == 'max':
             max_idx += [idx]
         idx += 1
 
@@ -214,7 +214,7 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
     new_model = base_net.model
 
     new_arch = new_arch[:idx] + ['max'] + new_arch[idx:]
-    new_model = helpers._insert_layer(new_model, helpers.arch_to_layer('max', activation=base_net.act), idx + 1)
+    new_model = helpers_other._insert_layer(new_model, helpers_other.arch_to_layer('max', activation=base_net.act), idx + 1)
     if const.debug:
         print('')
         print('__add_conv_max: outside for-loop')
@@ -233,8 +233,8 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
             print('New arch: {}'.format(new_arch))
             print('')
 
-        new_model = helpers._insert_layer(
-            new_model, helpers.arch_to_layer(conv_params, activation=base_net.act), idx + 1
+        new_model = helpers_other._insert_layer(
+            new_model, helpers_other.arch_to_layer(conv_params, activation=base_net.act), idx + 1
         )
 
     return Network(
@@ -255,10 +255,10 @@ def add_dense_drop(base_net):
     :return: Copy of given network, with additional sequence inserted in a position of a random dropout layer,
                 or at the beginning of 1D computations in the model.
     """
-    drop_idx = [helpers.find_first_drop_dense_arch(base_net.arch) - 1]
+    drop_idx = [helpers_other.find_first_drop_dense_arch(base_net.arch) - 1]
     idx = 0
     for l in base_net.arch:
-        if helpers.arch_type(l) == 'drop':
+        if helpers_other.arch_type(l) == 'drop':
             drop_idx += [idx]
         idx += 1
 
@@ -291,16 +291,16 @@ def __add_dense_drop(base_net, idx, dense_params, drop_params):
 
     if len(const.input_shape.fget()) > 2:
         new_arch = new_arch[:idx + 1] + [dense_params] + new_arch[idx + 1:]
-        new_model = helpers._insert_layer(
+        new_model = helpers_other._insert_layer(
             new_model,
-            helpers.arch_to_layer(dense_params, activation=base_net.act),
+            helpers_other.arch_to_layer(dense_params, activation=base_net.act),
             idx + 3
         )
     else:
         new_arch = new_arch[:idx + 1] + [dense_params] + new_arch[idx + 1:]
-        new_model = helpers._insert_layer(
+        new_model = helpers_other._insert_layer(
             new_model,
-            helpers.arch_to_layer(dense_params, activation=base_net.act),
+            helpers_other.arch_to_layer(dense_params, activation=base_net.act),
             idx + 2
         )
 
@@ -314,17 +314,17 @@ def __add_dense_drop(base_net, idx, dense_params, drop_params):
 
     if len(const.input_shape.fget()) > 2:
         new_arch = new_arch[:idx + 2] + [drop_params] + new_arch[idx + 2:]
-        new_model = helpers._insert_layer(
+        new_model = helpers_other._insert_layer(
             new_model,
-            helpers.arch_to_layer(drop_params, activation=base_net.act),
+            helpers_other.arch_to_layer(drop_params, activation=base_net.act),
             idx + 4
         )
 
     else:
         new_arch = new_arch[:idx + 2] + [drop_params] + new_arch[idx + 2:]
-        new_model = helpers._insert_layer(
+        new_model = helpers_other._insert_layer(
             new_model,
-            helpers.arch_to_layer(drop_params, activation=base_net.act),
+            helpers_other.arch_to_layer(drop_params, activation=base_net.act),
             idx + 3
         )
 
@@ -359,7 +359,7 @@ def remove_conv_max(base_net):
     max_idx = []
     idx = 0  # Since Activation layer is always first.
     for l in base_net.arch:
-        if helpers.arch_type(l) == 'max':
+        if helpers_other.arch_type(l) == 'max':
             max_idx += [idx]
         idx += 1
 
@@ -416,7 +416,7 @@ def __remove_conv_max(base_net, idx_start, idx_end):
             print('__remove_conv_max')
             print('\t layer tb removed: {}'.format(base_net.arch[i + 1]))
             print('')
-        new_model = helpers._remove_layer(new_model, idx_start + 1)
+        new_model = helpers_other._remove_layer(new_model, idx_start + 1)
 
     return Network(
         architecture=new_arch,
@@ -440,7 +440,7 @@ def remove_dense_drop(base_net):
     drop_idx = []
     idx = 0  # Since Activation layer is always first, and Flatten is before any Dropouts.
     for l in base_net.arch:
-        if helpers.arch_type(l) == 'drop':
+        if helpers_other.arch_type(l) == 'drop':
             drop_idx += [idx]
         idx += 1
 
@@ -476,27 +476,27 @@ def __remove_dense_drop(base_net, drop_idx):
     else:
         net_offset = 0
 
-    if helpers.arch_type(base_net.arch[drop_idx - 1]) == 'dense':  # Previous layer is dense.
+    if helpers_other.arch_type(base_net.arch[drop_idx - 1]) == 'dense':  # Previous layer is dense.
         if const.deep_debug:
             print('')
             print('remove_dense_drop - 1st path (layer before is dense)')
             print('')
-        new_model = helpers._remove_layer(new_model, drop_idx + net_offset + 1)
-        new_model = helpers._remove_layer(new_model, drop_idx + net_offset)
+        new_model = helpers_other._remove_layer(new_model, drop_idx + net_offset + 1)
+        new_model = helpers_other._remove_layer(new_model, drop_idx + net_offset)
         new_arch = new_arch[:drop_idx - 1] + new_arch[drop_idx + 1:]
 
-    elif helpers.arch_type(base_net.arch[drop_idx - 1]) == 'drop':  # Previous layer is dropout.
+    elif helpers_other.arch_type(base_net.arch[drop_idx - 1]) == 'drop':  # Previous layer is dropout.
         if const.deep_debug:
             print('')
             print('remove_dense_drop - 2nd path (layer before is drop)')
             print('')
-        new_model = helpers._remove_layer(new_model, drop_idx + 1 + net_offset)
-        new_model = helpers._remove_layer(new_model, drop_idx + net_offset)
+        new_model = helpers_other._remove_layer(new_model, drop_idx + 1 + net_offset)
+        new_model = helpers_other._remove_layer(new_model, drop_idx + net_offset)
         lay_before = 2
-        while helpers.arch_type(base_net.arch[drop_idx - lay_before]) in ['dense', 'drop']:
-            new_model = helpers._remove_layer(new_model, drop_idx + 1 + net_offset - lay_before)
+        while helpers_other.arch_type(base_net.arch[drop_idx - lay_before]) in ['dense', 'drop']:
+            new_model = helpers_other._remove_layer(new_model, drop_idx + 1 + net_offset - lay_before)
             lay_before += 1
-            if helpers.arch_type(base_net.arch[drop_idx - lay_before + 1]) == 'dense':
+            if helpers_other.arch_type(base_net.arch[drop_idx - lay_before + 1]) == 'dense':
                 break
         new_arch = new_arch[:drop_idx - lay_before + 1] + new_arch[drop_idx + 1:]
     else:
@@ -504,7 +504,7 @@ def __remove_dense_drop(base_net, drop_idx):
             print('')
             print('remove_dense_drop - 3rd path (layer before is something else)')
             print('')
-        new_model = helpers._remove_layer(new_model, drop_idx + 1 + net_offset)
+        new_model = helpers_other._remove_layer(new_model, drop_idx + 1 + net_offset)
         new_arch = new_arch[:drop_idx] + new_arch[drop_idx + 1:]
 
     return Network(
@@ -521,9 +521,9 @@ def add_arch_dense_drop(base_arch):
     drop_idx = []
     idx = 0
     for l in base_arch:
-        if helpers.arch_type(l) == 'drop':
+        if helpers_other.arch_type(l) == 'drop':
             drop_idx += [idx]
-        elif not drop_idx and helpers.arch_type(l) == 'dense':
+        elif not drop_idx and helpers_other.arch_type(l) == 'dense':
             drop_idx += [idx]
         idx += 1
 
@@ -555,13 +555,13 @@ def add_arch_conv_max(base_arch,  # type: List[Union[str, int, Tuple[Tuple[int, 
     if len(const.input_shape.fget()) < 3:
         return add_arch_dense_drop(base_arch)
 
-    if not helpers.can_add_max_number(base_arch):
+    if not helpers_other.can_add_max_number(base_arch):
         return add_arch_dense_drop(base_arch)
 
     max_idx = [0]
     idx = 1
     for l in base_arch:
-        if helpers.arch_type(l) == 'max':
+        if helpers_other.arch_type(l) == 'max':
             max_idx += [idx]
         idx += 1
 

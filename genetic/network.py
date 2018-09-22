@@ -8,7 +8,7 @@ from keras.layers import Activation, Dense, Flatten, Dropout, Conv2D, MaxPool2D
 from keras.models import Sequential, Model
 from typing import *
 
-from helpers import helpers
+from helpers import helpers_other
 from helpers.helpers_data import Array_Type
 from program_variables.program_params import debug, deep_debug, output_shape, input_shape
 
@@ -29,7 +29,7 @@ class Network:
             Network.__x_train = data[0]
             Network.__y_train = data[1]
 
-    default_callbacks = [EarlyStopping(patience=5), helpers.NaNSafer()]  # type: List[Callback]
+    default_callbacks = [EarlyStopping(patience=5), helpers_other.NaNSafer()]  # type: List[Callback]
 
     def __init__(
             self, architecture, copy_model=None,
@@ -56,7 +56,7 @@ class Network:
 
         for j in range(len(architecture)):
             i = architecture[j]
-            i_type = helpers.arch_type(i)
+            i_type = helpers_other.arch_type(i)
             if i_type == 'conv':
                 max_prev = False
                 if dense_started:
@@ -142,8 +142,8 @@ class Network:
             self.model = Sequential()  # type: Sequential
             self.__create_model()
         else:
-            self.model = helpers.clone_model(copy_model, self.act, self.opt)
-            assert helpers.assert_model_arch_match(self.model, self.arch)
+            self.model = helpers_other.clone_model(copy_model, self.act, self.opt)
+            assert helpers_other.assert_model_arch_match(self.model, self.arch)
 
     @staticmethod
     def __optimizer(opt_name, lr=None):
@@ -249,7 +249,7 @@ class Network:
         """
         import inspect
 
-        f = f or helpers.multi_roc_score
+        f = f or helpers_other.multi_roc_score
 
         args = inspect.getfullargspec(f).args
         if not ('y_true' in args and 'y_score' in args):
@@ -300,7 +300,7 @@ class Network:
         last_max_pool = True
         last_dropout = True
         for i in self.arch:
-            new_layer = helpers.arch_to_layer(i, self.act)
+            new_layer = helpers_other.arch_to_layer(i, self.act)
 
             if isinstance(new_layer, Conv2D):
                 last_max_pool = False
@@ -403,8 +403,8 @@ class Network:
         :param base_net_2: A second parent network on which mutation is based.
         :return: List of 2 Networks, both of which have features of both parent Networks.
         """
-        dense_idx_1, weight_idx_1 = helpers.find_first_dense(base_net_1.model)
-        dense_idx_2, weight_idx_2 = helpers.find_first_dense(base_net_2.model)
+        dense_idx_1, weight_idx_1 = helpers_other.find_first_dense(base_net_1.model)
+        dense_idx_2, weight_idx_2 = helpers_other.find_first_dense(base_net_2.model)
         dense_idx_1 -= 2
         dense_idx_2 -= 2
 
@@ -451,28 +451,28 @@ class Network:
         new_nets = []
         for _ in range(2):
             max_seq_start_idx = 0
-            drop_seq_start_idx = helpers.find_first_dense(base_net_1.model)[0] - 2
+            drop_seq_start_idx = helpers_other.find_first_dense(base_net_1.model)[0] - 2
             idx = 0
             max_seq_idx = []
             drop_seq_idx = []
 
             for l in base_net_1.arch:
-                if helpers.arch_type(l) == 'max':
+                if helpers_other.arch_type(l) == 'max':
                     max_seq_idx.append((0, max_seq_start_idx, idx))
                     max_seq_start_idx = idx + 1
-                elif helpers.arch_type(l) in ['drop', 'dense']:
+                elif helpers_other.arch_type(l) in ['drop', 'dense']:
                     if max_seq_start_idx != idx:
                         max_seq_idx.append((0, max_seq_start_idx, idx - 1))
                     break
                 idx += 1
 
             for l in base_net_1.arch[idx:]:
-                if helpers.arch_type(l) == 'drop':
+                if helpers_other.arch_type(l) == 'drop':
                     drop_seq_idx.append((0, drop_seq_start_idx, idx))
                     drop_seq_start_idx = idx + 1
                 idx += 1
 
-            if helpers.arch_type(base_net_1.arch[-1]) != 'drop':
+            if helpers_other.arch_type(base_net_1.arch[-1]) != 'drop':
                 drop_seq_idx.append((0, drop_seq_start_idx, len(base_net_1.arch) - 1))
 
             n_max_seq = [len(max_seq_idx)]
@@ -480,24 +480,24 @@ class Network:
 
             idx = 0
             max_seq_start_idx = 0
-            drop_seq_start_idx = helpers.find_first_dense(base_net_2.model)[0] - 2
+            drop_seq_start_idx = helpers_other.find_first_dense(base_net_2.model)[0] - 2
 
             for l in base_net_2.arch:
-                if helpers.arch_type(l) == 'max':
+                if helpers_other.arch_type(l) == 'max':
                     max_seq_idx.append((1, max_seq_start_idx, idx))
                     max_seq_start_idx = idx + 1
-                elif helpers.arch_type(l) in ['drop', 'dense']:
+                elif helpers_other.arch_type(l) in ['drop', 'dense']:
                     if max_seq_start_idx != idx:
                         max_seq_idx.append((1, max_seq_start_idx, idx - 1))
                     break
                 idx += 1
 
             for l in base_net_2.arch[idx:]:
-                if helpers.arch_type(l) == 'drop':
+                if helpers_other.arch_type(l) == 'drop':
                     drop_seq_idx.append((1, drop_seq_start_idx, idx))
                     drop_seq_start_idx = idx + 1
                 idx += 1
-            if helpers.arch_type(base_net_2.arch[-1]) != 'drop':
+            if helpers_other.arch_type(base_net_2.arch[-1]) != 'drop':
                 drop_seq_idx.append((1, drop_seq_start_idx, len(base_net_2.arch) - 1))
 
             n_max_seq = random.choice(n_max_seq + [len(max_seq_idx) - n_max_seq[0], int(len(max_seq_idx) / 2)])
