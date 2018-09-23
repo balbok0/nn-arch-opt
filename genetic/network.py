@@ -250,8 +250,11 @@ class Network:
         import inspect
 
         f = f or helpers_other.multi_roc_score
-
-        args = inspect.getfullargspec(f).args
+        try:
+            args = inspect.getfullargspec(f).args
+        except AttributeError:
+            # noinspection PyDeprecation
+            args = inspect.getargspec(f).args
         if not ('y_true' in args and 'y_score' in args):
             raise AttributeError('Given function f, should have parameters y_true and y_score.')
 

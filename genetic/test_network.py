@@ -121,7 +121,12 @@ def main():
     current_module = sys.modules[__name__]
     all_functions = inspect.getmembers(current_module, inspect.isfunction)
     for key, value in all_functions:
-        if inspect.getfullargspec(value).args == [] and not key == 'main':
+        try:
+            args = inspect.getfullargspec(value).args
+        except AttributeError:
+            # noinspection PyDeprecation
+            args = inspect.getargspec(value).args
+        if args == [] and not key == 'main':
             print('NEW TEST: {}\n\n'.format(key))
             value()
             print('\nEND TEST: {}\n\n\n\n'.format(key))
