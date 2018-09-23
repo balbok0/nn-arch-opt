@@ -214,3 +214,5 @@ TODO: Look for all github repos I was basing the code on.
     - Done
 
 TODO: Some recursion problem, remove_conv_max, and add_conv_max get looped.
+
+TODO: Github issue: https://github.com/keras-team/keras/issues/11212. For now created a get_l_p23_offset func in program_params for it

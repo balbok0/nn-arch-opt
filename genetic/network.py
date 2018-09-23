@@ -451,6 +451,7 @@ class Network:
         :param base_net_2: A second parent network on which mutation is based.
         :return: List of 2 Networks, both of which have features of both parent Networks.
         """
+        from program_variables.program_params import get_l_p23_offset
         new_nets = []
         for _ in range(2):
             max_seq_start_idx = 0
@@ -563,15 +564,15 @@ class Network:
                         print('\t\t{}'.format(j))
                         print('\t\t{}'.format(idx))
                         print('\t\t{}'.format(new_net.model.layers))
-                        print('\t\t{}'.format(new_net.model.get_layer(index=idx)))
-                        print('\t\t{}'.format(a.model.get_layer(index=j)))
-                        print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=j).get_weights()[1]).shape))
+                        print('\t\t{}'.format(new_net.model.get_layer(index=get_l_p23_offset() + idx)))
+                        print('\t\t{}'.format(a.model.get_layer(index=get_l_p23_offset() + j)))
+                        print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=get_l_p23_offset() + j).get_weights()[1]).shape))
                         print('\t\trest {}\n'.format(
-                            np.array(new_net.model.get_layer(index=idx).get_weights()[0]).shape)
+                            np.array(new_net.model.get_layer(index=get_l_p23_offset() + idx).get_weights()[0]).shape)
                         )
-                    kernel_filter = a.model.get_layer(index=j).get_weights()[1]
-                    new_weights = [new_net.model.get_layer(index=idx).get_weights()[0], kernel_filter]
-                    new_net.model.get_layer(index=idx).set_weights(new_weights)
+                    kernel_filter = a.model.get_layer(index=get_l_p23_offset() + j).get_weights()[1]
+                    new_weights = [new_net.model.get_layer(index=get_l_p23_offset() + idx).get_weights()[0], kernel_filter]
+                    new_net.model.get_layer(index=get_l_p23_offset() + idx).set_weights(new_weights)
                     idx += 1
                 idx += 1  # for MaxPool
 
@@ -582,12 +583,12 @@ class Network:
                     print('\tdense {}'.format(i))
                     print('\trange {}-{}\n'.format(i[1] + 1, i[2] + 1))
                 for j in range(i[1] + 2, i[2] + 2):
-                    w_a = a.model.get_layer(index=j).get_weights()
-                    w_n = new_net.model.get_layer(index=idx).get_weights()
+                    w_a = a.model.get_layer(index=get_l_p23_offset() + j).get_weights()
+                    w_n = new_net.model.get_layer(index=get_l_p23_offset() + idx).get_weights()
                     if deep_debug:
                         print('\t\t{}'.format(j))
-                        print('\t\t a_net layer {}'.format(a.model.get_layer(index=j)))
-                        print('\t\t new_net layer {}'.format(new_net.model.get_layer(index=idx)))
+                        print('\t\t a_net layer {}'.format(a.model.get_layer(index=get_l_p23_offset() + j)))
+                        print('\t\t new_net layer {}'.format(new_net.model.get_layer(index=get_l_p23_offset() + idx)))
                         print('\t\t len w_n[0]: {}'.format(len(w_n[0])))
                         print('\t\t len w_a[0]: {}'.format(len(w_a[0])))
                         print('')
@@ -599,7 +600,7 @@ class Network:
                         new_weights = np.concatenate((new_weights, w_n[0][len(new_weights):]), axis=0)
                     new_weights = [new_weights, w_a[1]]
 
-                    new_net.model.get_layer(index=idx).set_weights(new_weights)
+                    new_net.model.get_layer(index=get_l_p23_offset() + idx).set_weights(new_weights)
                     idx += 1
                 idx += 1  # for Dropout
 
