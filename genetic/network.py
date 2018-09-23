@@ -580,9 +580,11 @@ class Network:
                     w_a = a.model.get_layer(index=j).get_weights()
                     w_n = new_net.model.get_layer(index=idx).get_weights()
                     if deep_debug:
-                        print('\t\t {}'.format(a.model.get_layer(index=j)))
-                        print('\t\t {}'.format(new_net.model.get_layer(index=idx)))
-
+                        print('\t\t a_net layer {}'.format(a.model.get_layer(index=j)))
+                        print('\t\t new_net layer {}'.format(new_net.model.get_layer(index=idx)))
+                        print('\t\t len w_n[0]: {}'.format(len(w_n[0])))
+                        print('\t\t len w_a[0]: {}'.format(len(w_a[0])))
+                        print('')
                     new_weights = np.array(w_a[0][:len(w_n[0])])
                     if len(w_a[0]) < len(w_n[0]):
                         if deep_debug:
