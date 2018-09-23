@@ -5,7 +5,7 @@ from keras.callbacks import LearningRateScheduler
 from typing import *
 
 import helpers_other
-from genetic.network import Network
+from network import Network
 from program_variables import program_params as const
 
 
