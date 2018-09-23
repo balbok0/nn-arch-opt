@@ -5,7 +5,7 @@ from keras.callbacks import LearningRateScheduler
 from typing import *
 
 import helpers_other
-from network import Network
+from genetic.network import Network
 from program_variables import program_params as const
 
 
@@ -70,7 +70,10 @@ def _add_layer(base_net, layer_name, layer_idx):
 
     return Network(
         architecture=new_arch,
-        copy_model=helpers_other._insert_layer(base_net.model, helpers_other.arch_to_layer(layer_name, base_net.act), layer_idx),
+        copy_model=helpers_other._insert_layer(
+            base_net.model,
+            helpers_other.arch_to_layer(layer_name, base_net.act),
+            layer_idx),
         opt=base_net.opt,
         activation=base_net.act,
         callbacks=base_net.callbacks
