@@ -561,6 +561,8 @@ class Network:
                 for j in range(i[1] + 1, i[2] + 1):
                     if deep_debug:
                         print('\t\t{}'.format(j))
+                        print('\t\t{}'.format(idx))
+                        print('\t\t{}'.format(new_net.model.layers))
                         print('\t\t{}'.format(new_net.model.get_layer(index=idx)))
                         print('\t\t{}'.format(a.model.get_layer(index=j)))
                         print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=j).get_weights()[1]).shape))
