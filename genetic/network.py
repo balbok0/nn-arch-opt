@@ -557,8 +557,10 @@ class Network:
                 a = nets[i[0]]
                 if deep_debug:
                     print('\tmax {}'.format(i))
+                    print('\trange {}-{}'.format(i[1] + 1, i[2] + 1))
                 for j in range(i[1] + 1, i[2] + 1):
                     if deep_debug:
+                        print('\t\t{}'.format(j))
                         print('\t\t{}'.format(new_net.model.get_layer(index=idx)))
                         print('\t\t{}'.format(a.model.get_layer(index=j)))
                         print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=j).get_weights()[1]).shape))
@@ -576,10 +578,12 @@ class Network:
                 a = nets[i[0]]
                 if deep_debug:
                     print('\tdense {}'.format(i))
+                    print('\trange {}-{}\n'.format(i[1] + 1, i[2] + 1))
                 for j in range(i[1] + 2, i[2] + 2):
                     w_a = a.model.get_layer(index=j).get_weights()
                     w_n = new_net.model.get_layer(index=idx).get_weights()
                     if deep_debug:
+                        print('\t\t{}'.format(j))
                         print('\t\t a_net layer {}'.format(a.model.get_layer(index=j)))
                         print('\t\t new_net layer {}'.format(new_net.model.get_layer(index=idx)))
                         print('\t\t len w_n[0]: {}'.format(len(w_n[0])))

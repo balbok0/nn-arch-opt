@@ -78,7 +78,7 @@ def input_shape(val):
     _input_shape = val
     if len(val) > 1:
         global _max_limit
-        _max_limit = int(np.log2(np.min(val[1:])))
+        _max_limit = int(np.log2(np.min(val[:-1])))
 
 
 @property

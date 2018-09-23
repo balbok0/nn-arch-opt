@@ -330,7 +330,7 @@ def can_add_max_number(arch):
     for i in arch:
         if arch_type(i) == 'max':
             n += 1
-    return n < const.max_layers_limit.fget()
+    return n < const.max_layers_limit.fget() != 0
 
 
 def arch_type(layer):
