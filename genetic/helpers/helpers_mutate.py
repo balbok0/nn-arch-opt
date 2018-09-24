@@ -386,7 +386,7 @@ def remove_conv_max(base_net):
     if curr_idx == 1:
         start = 0
     else:
-        start = max_idx[curr_idx - 2]
+        start = max_idx[curr_idx - 2] + 1
 
     return __remove_conv_max(base_net, start, end)
 
@@ -394,26 +394,19 @@ def remove_conv_max(base_net):
 def __remove_conv_max(base_net, idx_start, idx_end):
     # type: (Network, int, int) -> Network
     new_model = base_net.model
-
-    if idx_start == 0:
-        new_arch = base_net.arch[:idx_start] + base_net.arch[idx_end + 1:]
-
-    else:
-        new_arch = base_net.arch[:idx_start] + base_net.arch[idx_end:]
+    new_arch = base_net.arch[:idx_start] + base_net.arch[idx_end + 1:]
 
     if const.debug:
         print('')
         print('__remove_conv_max')
         print('\told arch: {}'.format(base_net.arch))
         print('\tnew arch: {}'.format(new_arch))
+        print('\t{}'.format(new_model.layers))
         print('\tidx_start: {}'.format(idx_start))
         print('\tidx_end: {}'.format(idx_end))
         print('')
 
-    if idx_start == 0:
-        idx_start = -1  # Edge case
-
-    for i in range(idx_start, idx_end):
+    for i in range(idx_start, idx_end + 1):
         if const.deep_debug:
             print('')
             print('__remove_conv_max')
