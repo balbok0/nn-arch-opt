@@ -107,10 +107,3 @@ def mutations(val):
 -----------------------------------------------------------------------------------
 Keras/TensorFlow correction vars
 """
-
-
-def get_l_p23_offset():
-    # type: () -> int
-    import sys
-    return 1 if sys.version_info.major <= 2 else 0
-
