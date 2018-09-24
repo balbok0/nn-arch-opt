@@ -264,6 +264,15 @@ def _remove_layer(model, index):
 
     result = Sequential()
 
+    if const.deep_debug:
+        print('')
+        print('_remove_layer')
+        print('{}'.format(model_copy.layers[:index]))
+        print('{}'.format(model_copy.layers[index + 1:]))
+        print('layer to be removed at index {}'.format(index))
+        print('which corresponds to {}'.format(layer))
+        print('')
+
     # Such a deep copy is needed, so that input_shape is not specified, and layers are not shared.
     for l in model_copy.layers[:index]:
         result.add(__clone_layer(l))
@@ -273,7 +282,6 @@ def _remove_layer(model, index):
 
     if const.deep_debug:
         print('_remove_layer')
-        print('layer to be removed at index {}'.format(index))
         print('base model weights shape:')
         for i in model_copy.get_weights():
             print('\t%d' % len(i))
