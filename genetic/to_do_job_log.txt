@@ -104,11 +104,14 @@ TODO: Check the size of the training dataset: https://github.com/36000/cnn_color
     - Done. Used numpy.random instead of random.
 
 TODO: Limit depth/number of weights. Include a strict weight # cap.
-    - 21/07 - Made a function to determine # of weights in the model.
-    - 22/07 - Implemented in add_layer method. However, it doesn't have strict weight # cap. (Only a loose one, before adding a new layer)
-    - 24/07 - Added a max depth requirement when generating a networks for first time.
+    - Old:
+        - 21/07 - Made a function to determine # of weights in the model.
+        - 22/07 - Implemented in add_layer method. However, it doesn't have strict weight # cap. (Only a loose one, before adding a new layer)
+        - 24/07 - Added a max depth requirement when generating a networks for first time.
+    - 25/09 - Due to many changes in the code, depth limit is not working, and weight cap may not even be possible.
 
-TODO: Make number of conv_max, and dense_drop sequences similar, when creating the net.
+TODO: Make number of conv_max, and dense_drop sequences similar, when creating the net and in evolution.
+    - 25/09 - Done for network creation.
 
 23/07: To prevent overfitting. Save weights before training, then compare scores after fitting. If it's worse, keep the weights.
     - Done:

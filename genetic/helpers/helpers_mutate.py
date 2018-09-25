@@ -171,7 +171,7 @@ def change_lr_schedule(base_net):
     )
 
 
-def add_conv_max(base_net, conv_num=3):
+def add_conv_max(base_net, conv_num=const.n_conv_per_seq):
     # type: (Network, int) -> Network
     """
     Adds a sequence of Convolutional layers, followed by MaxPool layer to a copy of a given Network.
@@ -547,7 +547,7 @@ def add_arch_dense_drop(base_arch):
 
 
 def add_arch_conv_max(base_arch,  # type: List[Union[str, int, Tuple[Tuple[int, int], int]]]
-                      conv_num=3  # type int
+                      conv_num=const.n_conv_per_seq  # type int
                       ):
     # type: (...) -> List[Union[str, int, Tuple[Tuple[int, int], int]]]
     if len(const.input_shape.fget()) < 3:

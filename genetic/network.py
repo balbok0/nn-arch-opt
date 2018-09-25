@@ -261,11 +261,11 @@ class Network:
         if self.__score == 0.0:
             self.__score = f(y_true=y_true, y_score=y_score)
 
-        if self.__score < self.__prev_score:
-            self.__score = self.__prev_score
-            self.__prev_score = 0.
-            self.model.set_weights(self.__prev_weights)
-            self.__prev_weights = None
+            if self.__score < self.__prev_score:
+                self.__score = self.__prev_score
+                self.__prev_score = 0.
+                self.model.set_weights(self.__prev_weights)
+                self.__prev_weights = None
 
         return self.__score
 

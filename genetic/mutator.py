@@ -292,25 +292,20 @@ class Mutator(object):
                              random.choice(const.mutations.fget()['conv_filters'])),
                             random.choice(const.mutations.fget()['dense_size'])]
 
-        n_layers = 2  # since there's always at least one conv, dense layer.
-
-        # r_min - adding any new sequence.,
-        r_min = .5
+        if const.max_depth != 0:
+            n_layers = np.random.randint(const.min_depth, const.max_depth)
+        else:
+            n_layers = np.random.randint(const.min_depth, 20)
 
         if len(const.input_shape.fget()) >= 3:
             # Convolution/Maxout part of architecture
-            r = random.random()
-            while (r > r_min and n_layers < const.max_depth != 0) or n_layers < const.min_depth != 0:
-                n_layers = len(architecture)
+            while len(architecture) + const.n_conv_per_seq + 1 < \
+                    int(n_layers * (1.0 * const.n_conv_per_seq) / (const.n_conv_per_seq + 2)):
                 architecture = helpers_mutate.add_arch_conv_max(architecture)
-                r = random.random()
 
         # Dense/Dropout part of architecture
-        r = random.random()
-        while (r > r_min and n_layers < const.max_depth != 0) or n_layers < const.min_depth != 0:
-            n_layers = len(architecture)
+        while len(architecture) + 2 < n_layers:
             architecture = helpers_mutate.add_arch_dense_drop(architecture)
-            r = random.random()
 
         return Network(
             architecture=architecture,

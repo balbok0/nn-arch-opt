@@ -7,8 +7,8 @@ from typing import List
 # Network parameters
 # When any of them is set to 0, then this boundary is ignored.
 max_n_weights = 7500000
-max_depth = 10
-min_depth = 3
+max_depth = 25
+min_depth = 10
 
 # Mutation parameters
 _mutations = {
@@ -22,6 +22,8 @@ _mutations = {
     'learning_decay_rate': [0.7, 0.8, 0.9],
     'activation': ['relu', 'sigmoid', 'tanh']
 }
+
+n_conv_per_seq = 3
 
 # Above this threshold mutations are parent ones, below are random. Range is (0, 1). Used in Mutator.
 # If set to 1, all mutations are random. If set to 0, all mutations are parent.
