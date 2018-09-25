@@ -217,26 +217,4 @@ TODO: Some recursion problem, remove_conv_max, and add_conv_max get looped.
 
 TODO: Github issue: https://github.com/keras-team/keras/issues/11212. For now created a get_l_p23_offset func in program_params for it
 
-TODO: Traceback (most recent call last):
-  File "main.py", line 10, in <module>
-    main()
-  File "main.py", line 6, in main
-    print(m.evolve(x, y, validation_split=0.6, batch_size=1000, verbose=1, generations=20))
-  File "/home/jfilipek/ColorFlow/nn-arch-opt/genetic/mutator.py", line 193, in evolve
-    self.__mutate_networks(scores, self.population_size)
-  File "/home/jfilipek/ColorFlow/nn-arch-opt/genetic/mutator.py", line 266, in __mutate_networks
-    new_nets += Network.mutate(pair[0], pair[1])
-  File "/home/jfilipek/ColorFlow/nn-arch-opt/genetic/network.py", line 391, in mutate
-    Network._mutate_random(base_net_2, change_number_cap=change_number_cap)
-  File "/home/jfilipek/ColorFlow/nn-arch-opt/genetic/network.py", line 648, in _mutate_random
-    base_net = np.random.choice(possible_changes, p=probabilities)(base_net)
-  File "/home/jfilipek/ColorFlow/nn-arch-opt/genetic/helpers/helpers_mutate.py", line 391, in remove_conv_max
-    return __remove_conv_max(base_net, start, end)
-  File "/home/jfilipek/ColorFlow/nn-arch-opt/genetic/helpers/helpers_mutate.py", line 422, in __remove_conv_max
-    new_model = helpers_other._remove_layer(new_model, idx_start + 1)
-  File "/home/jfilipek/ColorFlow/nn-arch-opt/genetic/helpers/helpers_other.py", line 272, in _remove_layer
-    result.add(__clone_layer(l))
-
-  File "/usr/local/lib/python2.7/dist-packages/keras/models.py", line 454, in add
-    raise ValueError('The first layer in a '
-  ValueError: The first layer in a Sequential model must get an `input_shape` or `batch_input_shape` argument.
+TODO: Learning rate blows up and is negative

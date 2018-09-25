@@ -411,6 +411,17 @@ class Network:
         dense_idx_1 -= 2
         dense_idx_2 -= 2
 
+        if deep_debug:
+            print('')
+            print('_parent_mutation (1)')
+            print('net 1: {}'.format(base_net_1.arch))
+            print('net 2: {}'.format(base_net_2.arch))
+            print('weight_idx_1: {}'.format(weight_idx_1))
+            print('weight_idx_2: {}'.format(weight_idx_2))
+            print('dense_idx_1: {}'.format(dense_idx_1))
+            print('dense_idx_2: {}'.format(dense_idx_2))
+            print('')
+
         conv_1 = Network(
             architecture=base_net_1.arch[:dense_idx_1] + base_net_2.arch[dense_idx_2:],
             opt=base_net_2.opt,
