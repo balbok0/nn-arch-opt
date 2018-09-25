@@ -60,6 +60,7 @@ class Mutator(object):
                validation_split=None,  # type: float
                use_generator=False,  # type: bool
                generations=20,  # type: int
+               save_all_nets=False,  # type: bool
                save_each_generation_best=True,  # type: bool
                saving_dir=None,  # type: str
                save_best=True,  # type: bool
@@ -82,9 +83,11 @@ class Mutator(object):
         :param use_generator: Whether to generate training data after each generation.
                 Make sure generator is specified (set_dataset_generator, or specify generator_f in constructor).
         :param generations: Number of generations.
-        :param save_each_generation_best: If true, aves the best network from each generation in specified 'saving_dir'.
+        :param save_all_nets: If true, saves all networks, after each generation. If true,  Overrides both save_each_generation.
+        :param save_each_generation_best: If true, saves the best network from each generation
+                in specified 'saving_dir'. If true, overrides save_best.
         :param save_best: If true, saves the best network at the end of lat generation.
-                            Overrode by save_each_generation_best.
+                Overrode by save_each_generation_best.
         :param saving_dir: Directory to which models are saved.
         :param epochs: Number of epochs each network in each generation is trained.
         :param initial_epoch: Epoch at which training is supposed to get started.
@@ -160,6 +163,14 @@ class Mutator(object):
                     best_net = net
                     best_score = score
 
+            # Saves all networks, after their training, and evaluation.
+            if save_all_nets:
+                gen_dir = '{}/gen_{:03d}/'.format(saving_dir, i + 1)
+                if not os.path.exists(gen_dir):
+                    os.makedirs(gen_dir)
+                for j_i, j in enumerate(self.networks):
+                    j.save('{}net_{:03d}'.format(gen_dir, j_i + 1))
+
             scores = collections.OrderedDict(zip(tmp_nets, tmp_scores))
 
             config = best_net.get_config()
@@ -186,8 +197,8 @@ class Mutator(object):
             log_save.print_message(printing[verbose])
 
             # Save the best net of current generation.
-            if save_each_generation_best or i + 1 == generations:
-                best_net.save(file_path='{dir}net_{num:03d}.h5'.format(dir=saving_dir, num=i + 1))
+            if save_each_generation_best:
+                best_net.save(file_path='{dir}net_best_from_{num:03d}.h5'.format(dir=saving_dir, num=i + 1))
 
             if not i + 1 == generations:
                 self.__mutate_networks(scores, self.population_size)
@@ -202,8 +213,8 @@ class Mutator(object):
         best = scores.popitem()
         best_score = best[1]
         best_net = best[0]
-        if save_best and not save_each_generation_best:
-            best_net.save(file_path='{dir}best_net'.format(dir=saving_dir))
+        if save_best:
+            best_net.save(file_path='{dir}best_net.h5'.format(dir=saving_dir))
         config = best_net.get_config()
 
         log_save.print_message(

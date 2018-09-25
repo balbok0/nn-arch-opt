@@ -232,7 +232,9 @@ TODO: Look for all github repos I was basing the code on.
 23/09: Github issue: https://github.com/keras-team/keras/issues/11212. For now created a get_l_p23_offset func in program_params for it
     - Done, problem was in outdated keras on squirrel.
 
-TODO: Learning rate blows up and is negative
+TODO: Learning rate sometimes blows up and is negative
     - 25/09 - Seems like a an issue, which a lot of ppl have, since there's a lot of issues on keras' github.
+                One idea (another quick fix) is to keep track of it in the NaNSafer, which on epoch start could look at the opt's lr, and reset it to default if negative.
 
-TODO: Make mode to save all networks, after each generation
+25/09: Make mode to save all networks, after each generation
+    - Done, flag in evolve is save_all_nets
