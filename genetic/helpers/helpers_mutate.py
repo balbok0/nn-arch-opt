@@ -7,6 +7,7 @@ from typing import *
 import helpers_other
 from network import Network
 from program_variables import program_params as const
+from deprecated import deprecated
 
 
 def add_layer(base_net):
@@ -142,6 +143,7 @@ def change_activation(base_net):
     )
 
 
+@deprecated
 def change_lr_schedule(base_net):
     # type: (Network) -> Network
     """

@@ -633,11 +633,10 @@ class Network:
             helpers_mutate.add_dense_drop,
             helpers_mutate.remove_dense_drop,
             helpers_mutate.change_opt,
-            helpers_mutate.change_activation,
-            helpers_mutate.change_lr_schedule
+            helpers_mutate.change_activation
         ]
 
-        probabilities = [11, 7, 3, 3, 1]
+        probabilities = [11, 7, 3, 3]
 
         if len(input_shape.fget()) > 2:
             possible_changes += [

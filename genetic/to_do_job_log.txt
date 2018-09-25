@@ -3,6 +3,8 @@ TODO: tpr=0.5 -> fpr as a metric
     - Actually, why not F-score? It seems to make more sense, as it looks at tpr=0.5, but also looks at fpr, tnr, fnr.
 
 TODO: Momentum as a parameter (READ: how they behave/conserve in keras with one-by-one epoch calls)
+    - Notes:
+        - keras fit function provides a start_epoch keyword, which helps with taking care of optimizer.
     - Not using, one-by-one epoch calls anymore, due to learning decay as parameter.
     - Since, different opt algorithms have different key-words for momentum (ex. beta_1, beta_2, momentum),
     how should I handle it?
@@ -106,6 +108,8 @@ TODO: Limit depth/number of weights. Include a strict weight # cap.
     - 22/07 - Implemented in add_layer method. However, it doesn't have strict weight # cap. (Only a loose one, before adding a new layer)
     - 24/07 - Added a max depth requirement when generating a networks for first time.
 
+TODO: Make number of conv_max, and dense_drop sequences similar, when creating the net.
+
 23/07: To prevent overfitting. Save weights before training, then compare scores after fitting. If it's worse, keep the weights.
     - Done:
         1. Modified __init__ to add previous score and previous weights.
@@ -186,11 +190,12 @@ TODO: Limit depth/number of weights. Include a strict weight # cap.
     - Made 2 properties, one for # of dimensions of input, one for maximal number of maxpool layers.
     - Implemented.
 
-TODO: Make a support for 1-D input too. (by making flag inp_dim?) In order to add support for 1-D input prepare_data has to be modified.
+01-17/09: Make a support for 1-D input too. (by making flag inp_dim?) In order to add support for 1-D input prepare_data has to be modified.
     - 01/09 - Implemented shape of input variable.
     - 17/09 - Done some stuff. So nets can be trained, but fail on first evolution between first and second gen.
+    - 25/09 - Looks like it works.
 
-02/09 Limit number of things printed under debug (make a third mode of debugging? or move some things into deep_debug)
+02/09: Limit number of things printed under debug (make a third mode of debugging? or move some things into deep_debug)
     - Done.
 
 01-02/09: Speed up Network creation (basically base it only on arch in mutator, and then make a Network out of it).
@@ -203,7 +208,8 @@ TODO: Make a support for 1-D input too. (by making flag inp_dim?) In order to ad
                 Also, there's a rare bug in the mutate_parent_2 with copying weights over sometimes.
     - 14/09 - Part 2, Function which changes data over time is specified.
 
-TODO: README, and migrate to a different repo than main ColorFlow.
+22/09: README, and migrate to a different repo than main ColorFlow.
+    - Done, needs to be updated, especially with package requirements
 
 TODO: Look for all github repos I was basing the code on.
 
@@ -213,8 +219,13 @@ TODO: Look for all github repos I was basing the code on.
          2. Net 2: [((3, 3), 8), 64, 128, 'drop0.30', 32, 'drop0.70', 16, 'drop0.50', 64]
     - Done
 
-TODO: Some recursion problem, remove_conv_max, and add_conv_max get looped.
+23/09: Some recursion problem, remove_conv_max, and add_conv_max get looped.
+    - Done, problem with wrong limit of max (channels last in shape of data, instead of first, as in implementation)
 
-TODO: Github issue: https://github.com/keras-team/keras/issues/11212. For now created a get_l_p23_offset func in program_params for it
+22-25/09: Transforming code to be compatible with python2, fixing bugs, so it's able to run on squirrel.
+
+23/09: Github issue: https://github.com/keras-team/keras/issues/11212. For now created a get_l_p23_offset func in program_params for it
+    - Done, problem was in outdated keras on squirrel.
 
 TODO: Learning rate blows up and is negative
+    - 25/09 - Seems like a an issue, which a lot of ppl have, since there's a lot of issues on keras' github.
