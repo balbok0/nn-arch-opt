@@ -103,15 +103,17 @@ TODO: Check the size of the training dataset: https://github.com/36000/cnn_color
 17/07: Make probability distributions for different choices in __mutate.
     - Done. Used numpy.random instead of random.
 
-TODO: Limit depth/number of weights. Include a strict weight # cap.
+25/09: Limit depth/number of weights. Include a strict weight # cap.
     - Old:
         - 21/07 - Made a function to determine # of weights in the model.
         - 22/07 - Implemented in add_layer method. However, it doesn't have strict weight # cap. (Only a loose one, before adding a new layer)
         - 24/07 - Added a max depth requirement when generating a networks for first time.
     - 25/09 - Due to many changes in the code, depth limit is not working, and weight cap may not even be possible.
+                2. Done limits, on the level of Network.mutate... They are not as strict as the possibly can,
+                    however it somewhat works, and takes at most a generation (or 2 in edge case) to get back to within the bounds.
 
 TODO: Make number of conv_max, and dense_drop sequences similar, when creating the net and in evolution.
-    - 25/09 - Done for network creation.
+    - 25/09 - Done for network creation. For evolution tweaking the numbers is required
 
 23/07: To prevent overfitting. Save weights before training, then compare scores after fitting. If it's worse, keep the weights.
     - Done:
@@ -232,3 +234,5 @@ TODO: Look for all github repos I was basing the code on.
 
 TODO: Learning rate blows up and is negative
     - 25/09 - Seems like a an issue, which a lot of ppl have, since there's a lot of issues on keras' github.
+
+TODO: Make mode to save all networks, after each generation

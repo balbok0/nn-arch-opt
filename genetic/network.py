@@ -406,6 +406,8 @@ class Network:
         :param base_net_2: A second parent network on which mutation is based.
         :return: List of 2 Networks, both of which have features of both parent Networks.
         """
+        from program_variables.program_params import max_depth, min_depth
+
         dense_idx_1, weight_idx_1 = helpers_other.find_first_dense(base_net_1.model)
         dense_idx_2, weight_idx_2 = helpers_other.find_first_dense(base_net_2.model)
         dense_idx_1 -= 2
@@ -422,33 +424,42 @@ class Network:
             print('dense_idx_2: {}'.format(dense_idx_2))
             print('')
 
-        conv_1 = Network(
-            architecture=base_net_1.arch[:dense_idx_1] + base_net_2.arch[dense_idx_2:],
-            opt=base_net_2.opt,
-            activation=base_net_2.act,
-            callbacks=base_net_2.callbacks
-        )
+        if min_depth < dense_idx_1 + len(base_net_2.arch[dense_idx_2:]) < max_depth:
 
-        conv_2 = Network(
-            architecture=base_net_2.arch[:dense_idx_2] + base_net_1.arch[dense_idx_1:],
-            opt=base_net_1.opt,
-            activation=base_net_1.act,
-            callbacks=base_net_1.callbacks
-        )
+            conv_1 = Network(
+                architecture=base_net_1.arch[:dense_idx_1] + base_net_2.arch[dense_idx_2:],
+                opt=base_net_2.opt,
+                activation=base_net_2.act,
+                callbacks=base_net_2.callbacks
+            )
 
-        conv_1.model.set_weights(  # Set Conv-Max weights
-            base_net_1.model.get_weights()[:weight_idx_1] + conv_1.model.get_weights()[weight_idx_1:]
-        )
-        conv_1.model.set_weights(  # Set Dense-Drop weights
-            conv_1.model.get_weights()[:weight_idx_1 + 1] + base_net_2.model.get_weights()[weight_idx_2 + 1:]
-        )
+            conv_1.model.set_weights(  # Set Conv-Max weights
+                base_net_1.model.get_weights()[:weight_idx_1] + conv_1.model.get_weights()[weight_idx_1:]
+            )
+            conv_1.model.set_weights(  # Set Dense-Drop weights
+                conv_1.model.get_weights()[:weight_idx_1 + 1] + base_net_2.model.get_weights()[weight_idx_2 + 1:]
+            )
+        else:
+            conv_1 = Network._mutate_random(base_net_1)
 
-        conv_2.model.set_weights(  # Set Conv-Max weights
-            base_net_2.model.get_weights()[:weight_idx_2] + conv_2.model.get_weights()[weight_idx_2:]
-        )
-        conv_2.model.set_weights(  # Set Dense-Drop weights
-            conv_2.model.get_weights()[:weight_idx_2 + 1] + base_net_1.model.get_weights()[weight_idx_1 + 1:]
-        )
+        if min_depth < dense_idx_2 + len(base_net_1.arch[dense_idx_1:]) < max_depth:
+
+            conv_2 = Network(
+                architecture=base_net_2.arch[:dense_idx_2] + base_net_1.arch[dense_idx_1:],
+                opt=base_net_1.opt,
+                activation=base_net_1.act,
+                callbacks=base_net_1.callbacks
+            )
+
+            conv_2.model.set_weights(  # Set Conv-Max weights
+                base_net_2.model.get_weights()[:weight_idx_2] + conv_2.model.get_weights()[weight_idx_2:]
+            )
+            conv_2.model.set_weights(  # Set Dense-Drop weights
+                conv_2.model.get_weights()[:weight_idx_2 + 1] + base_net_1.model.get_weights()[weight_idx_1 + 1:]
+            )
+        else:
+            conv_2 = Network._mutate_random(base_net_2)
+
         return [conv_1, conv_2]
 
     @staticmethod
@@ -462,6 +473,8 @@ class Network:
         :param base_net_2: A second parent network on which mutation is based.
         :return: List of 2 Networks, both of which have features of both parent Networks.
         """
+        from program_variables.program_params import n_conv_per_seq, max_depth, min_depth
+
         new_nets = []
         for _ in range(2):
             max_seq_start_idx = 0
@@ -515,9 +528,12 @@ class Network:
                 drop_seq_idx.append((1, drop_seq_start_idx, len(base_net_2.arch) - 1))
 
             n_max_seq = random.choice(n_max_seq + [len(max_seq_idx) - n_max_seq[0], int(len(max_seq_idx) / 2)])
-            n_max_seq = max(1, n_max_seq)
             n_drop_seq = random.choice(n_drop_seq + [len(drop_seq_idx) - n_drop_seq[0], int(len(drop_seq_idx) / 2)])
-            n_drop_seq = max(1, n_drop_seq)
+
+            # Bounds n_max_seq, and n_drop_seq, so they roughly satisfy the the layer bounds
+            n_max_seq = min(n_max_seq, max_depth * (n_conv_per_seq * 1.0 / (n_conv_per_seq + 2)))
+            n_max_seq = max(n_max_seq, min_depth * (n_conv_per_seq * 1.0 / (n_conv_per_seq + 2)))
+            n_drop_seq = min(max_depth - n_max_seq, max(min_depth - n_max_seq, n_drop_seq))
 
             if debug:
                 print('\n_parent_mutate_2')
@@ -527,6 +543,7 @@ class Network:
                 print('n_drop_seq: {}'.format(n_drop_seq))
                 print('')
 
+            # Create an arch
             archs = [base_net_1.arch, base_net_2.arch]
             new_arch = []
 
@@ -535,15 +552,16 @@ class Network:
                                    size=n_max_seq, replace=n_max_seq <= len(max_seq_idx))
             for i in tmp:
                 max_idxs.append(max_seq_idx[i])
+
             drop_idxs = []
             tmp = np.random.choice(np.arange(0, len(drop_seq_idx), dtype='int'),
                                    size=n_drop_seq, replace=n_drop_seq <= len(drop_seq_idx))
             for i in tmp:
                 drop_idxs.append(drop_seq_idx[i])
+
             for i in max_idxs:
                 a = archs[i[0]]
                 new_arch += a[i[1]:i[2] + 1]
-
             for i in drop_idxs:
                 a = archs[i[0]]
                 new_arch += a[i[1]:i[2] + 1]
@@ -618,42 +636,47 @@ class Network:
         return new_nets
 
     @staticmethod
-    def _mutate_random(base_net, change_number_cap=3):
-        # type: (Network, int) -> Network
+    def _mutate_random(base_net, min_changes=2, max_changes=6):
+        # type: (Network, int, int) -> Network
         """
         Given a network, returns a new Network, with a random number of mutations (capped at given number).
 
         :param base_net: A network to which mutations should be based. It's not affected.
-        :param change_number_cap: Maximal number of changes.
+        :param min_changes: Minimal number of changes
+        :param max_changes: Maximal number of changes.
         :return: A new, mutated Network.
         """
         from helpers import helpers_mutate
+        from program_variables.program_params import max_depth, min_depth
+        n_changes = np.random.randint(min_changes, max_changes)
 
-        possible_changes = [
-            helpers_mutate.add_dense_drop,
-            helpers_mutate.remove_dense_drop,
-            helpers_mutate.change_opt,
-            helpers_mutate.change_activation
-        ]
-
-        probabilities = [11, 7, 3, 3]
-
-        if len(input_shape.fget()) > 2:
-            possible_changes += [
-                helpers_mutate.add_conv_max,
-                helpers_mutate.remove_conv_max,
+        for i in range(n_changes):
+            possible_changes = [
+                helpers_mutate.change_opt,
+                helpers_mutate.change_activation
             ]
 
-            probabilities += [9, 7]
+            change_p = [3, 3]
 
-        probabilities = np.divide(probabilities, 1. * np.sum(probabilities))  # Normalization, for probabilities.
+            if len(base_net.arch) + 2 < max_depth:
+                possible_changes += [helpers_mutate.add_dense_drop]
+                change_p += [11]
+            if len(base_net.arch) - 2 > min_depth:
+                possible_changes += [helpers_mutate.remove_dense_drop]
+                change_p += [7]
 
-        # Number of changes is capped, and distributed exponentially.
-        n_of_changes = int(1 + np.random.exponential())
-        if n_of_changes > change_number_cap:
-            n_of_changes = change_number_cap
+            if len(input_shape.fget()) > 2:
+                from program_variables.program_params import n_conv_per_seq
+                if len(base_net.arch) + n_conv_per_seq + 1 < max_depth:
+                    possible_changes += [helpers_mutate.add_conv_max]
+                    change_p += [9]
+                if len(base_net.arch) - n_conv_per_seq + 1 > min_depth:
+                    possible_changes += [helpers_mutate.remove_conv_max]
+                    change_p += [7]
 
-        for i in range(n_of_changes):
-            base_net = np.random.choice(possible_changes, p=probabilities)(base_net)
+            change_p = np.divide(change_p, 1. * np.sum(change_p))  # Normalization, for probabilities.
+
+            # Number of changes is capped, and distributed exponentially.
+            base_net = np.random.choice(possible_changes, p=change_p)(base_net)
 
         return base_net

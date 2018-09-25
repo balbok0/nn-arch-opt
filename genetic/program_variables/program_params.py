@@ -6,7 +6,6 @@ from typing import List
 
 # Network parameters
 # When any of them is set to 0, then this boundary is ignored.
-max_n_weights = 7500000
 max_depth = 25
 min_depth = 10
 

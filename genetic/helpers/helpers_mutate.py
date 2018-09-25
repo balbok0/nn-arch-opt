@@ -22,8 +22,7 @@ def add_layer(base_net):
 
     possible_layers = {}
 
-    if helpers_other.get_number_of_weights(base_net.model) > const.max_n_weights != 0 or \
-            len(base_net.arch) + 1 > const.max_depth != 0:
+    if len(base_net.arch) + 1 > const.max_depth != 0:
         remove_layer(base_net)
 
     if layer_idx == 0:
