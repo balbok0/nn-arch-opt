@@ -477,8 +477,8 @@ class Network:
         new_nets = []
         for _ in range(2):
             max_seq_start_idx = 0
-            drop_seq_start_idx = helpers_other.find_first_dense(base_net_1.model)[0] - 2
-            idx = 0
+            drop_seq_start_idx = helpers_other.find_first_drop_dense_arch(base_net_1.arch)  # type: int
+            idx = 0  # type: int
             max_seq_idx = []
             drop_seq_idx = []
 
@@ -506,7 +506,7 @@ class Network:
 
             idx = 0
             max_seq_start_idx = 0
-            drop_seq_start_idx = helpers_other.find_first_dense(base_net_2.model)[0] - 2
+            drop_seq_start_idx = helpers_other.find_first_drop_dense_arch(base_net_2.arch)
 
             for l in base_net_2.arch:
                 if helpers_other.arch_type(l) == 'max':
@@ -542,10 +542,6 @@ class Network:
                 print('n_drop_seq: {}'.format(n_drop_seq))
                 print('')
 
-            # Create an arch
-            archs = [base_net_1.arch, base_net_2.arch]
-            new_arch = []
-
             max_idxs = []
             tmp = np.random.choice(np.arange(0, len(max_seq_idx), dtype='int'),
                                    size=n_max_seq, replace=n_max_seq > len(max_seq_idx))
@@ -558,87 +554,98 @@ class Network:
             for i in tmp:
                 drop_idxs.append(drop_seq_idx[i])
 
-            for i in max_idxs:
-                a = archs[i[0]]
-                new_arch += a[i[1]:i[2] + 1]
-            for i in drop_idxs:
-                a = archs[i[0]]
-                new_arch += a[i[1]:i[2] + 1]
-
-            # TODO:Split mutator_parent_2 here for a non-random part. (for testing and debugging)
-
-            new_net = Network(
-                architecture=new_arch,
-                callbacks=random.choice([base_net_1.callbacks, base_net_2.callbacks]),
-                opt=random.choice([base_net_1.opt, base_net_2.opt]),
-                activation=random.choice([base_net_1.act, base_net_2.act])
-            )
-
-            nets = [base_net_1, base_net_2]  # type: List[Network]
-
             if debug:
                 print('\n_parent_mutate_2')
-                print('Net 1: {}'.format(base_net_1.arch))
-                print('Net 2: {}'.format(base_net_2.arch))
-                print('New net: {}'.format(new_net.arch))
-                print('Len of new net: {}'.format(len(new_net.arch)))
+                print('drop_idxs: {}'.format(drop_idxs))
+                print('max_idxs: {}'.format(max_idxs))
                 print('')
-
-            idx = 1
-            for i in max_idxs:
-                a = nets[i[0]]
-                if deep_debug:
-                    print('\tmax {}'.format(i))
-                    print('\trange {}-{}'.format(i[1] + 1, i[2] + 1))
-                for j in range(i[1] + 1, i[2] + 1):
-                    if deep_debug:
-                        print('\t\tj {}'.format(j))
-                        print('\t\tidx {}'.format(idx))
-                        print('\t\tnew_net layers {}'.format(new_net.model.layers))
-                        print('\t\tnew net layer at idx {}'.format(new_net.model.get_layer(index=idx)))
-                        print('\t\told net layer at j {}'.format(a.model.get_layer(index=j)))
-                        print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=j).get_weights()[1]).shape))
-                        print('\t\trest {}\n'.format(
-                            np.array(new_net.model.get_layer(index=idx).get_weights()[0]).shape)
-                        )
-                    kernel_filter = a.model.get_layer(index=j).get_weights()[1]
-                    new_weights = [new_net.model.get_layer(index=idx).get_weights()[0], kernel_filter]
-                    new_net.model.get_layer(index=idx).set_weights(new_weights)
-                    idx += 1
-                idx += 1  # for MaxPool
-
-            idx += 1  # Flatten
-            for i in drop_idxs:
-                a = nets[i[0]]
-                if deep_debug:
-                    print('\tdense {}'.format(i))
-                    print('\trange {}-{}\n'.format(i[1] + 1, i[2] + 1))
-                for j in range(i[1] + 2, i[2] + 2):
-                    w_a = a.model.get_layer(index=j).get_weights()
-                    w_n = new_net.model.get_layer(index=idx).get_weights()
-                    if deep_debug:
-                        print('\t\t{}'.format(j))
-                        print('\t\tj {}'.format(j))
-                        print('\t\tidx {}'.format(idx))
-                        print('\t\ta_net layer {}'.format(a.model.get_layer(index=j)))
-                        print('\t\tnew_net layer {}'.format(new_net.model.get_layer(index=idx)))
-                        print('\t\tlen w_n[0]: {}'.format(len(w_n[0])))
-                        print('\t\tlen w_a[0]: {}'.format(len(w_a[0])))
-                        print('')
-                    new_weights = np.array(w_a[0][:len(w_n[0])])
-                    if len(w_a[0]) < len(w_n[0]):
-                        if deep_debug:
-                            print(new_weights.shape)
-                            print(np.array(w_n[0][len(new_weights):]).shape)
-                        new_weights = np.concatenate((new_weights, w_n[0][len(new_weights):]), axis=0)
-                    new_weights = [new_weights, w_a[1]]
-
-                    new_net.model.get_layer(index=idx).set_weights(new_weights)
-                    idx += 1
-                idx += 1  # for Dropout
-
-            new_nets += [new_net]
+            new_nets += [Network._helper_parent_2(base_net_1, base_net_2, max_idxs, drop_idxs)]
         return new_nets
+
+    @staticmethod
+    def _helper_parent_2(base_net_1, base_net_2, max_idxs, drop_idxs):
+        # type: (Network, Network, List[Tuple], List[Tuple]) -> Network
+        archs = [base_net_1.arch, base_net_2.arch]
+        new_arch = []
+
+        for i in max_idxs:
+            a = archs[i[0]]
+            new_arch += a[i[1]:i[2] + 1]
+        for i in drop_idxs:
+            a = archs[i[0]]
+            new_arch += a[i[1]:i[2] + 1]
+
+        new_net = Network(
+            architecture=new_arch,
+            callbacks=random.choice([base_net_1.callbacks, base_net_2.callbacks]),
+            opt=random.choice([base_net_1.opt, base_net_2.opt]),
+            activation=random.choice([base_net_1.act, base_net_2.act])
+        )
+
+        nets = [base_net_1, base_net_2]  # type: List[Network]
+
+        if debug:
+            print('\n_helper_parent_mutate_2')
+            print('Net 1: {}'.format(base_net_1.arch))
+            print('Net 2: {}'.format(base_net_2.arch))
+            print('New net: {}'.format(new_net.arch))
+            print('Len of new net: {}'.format(len(new_net.arch)))
+            print('')
+
+        idx = 1
+        for i in max_idxs:
+            a = nets[i[0]]
+            if deep_debug:
+                print('\tmax {}'.format(i))
+                print('\trange {}-{}'.format(i[1] + 1, i[2] + 1))
+                print('\told arch {}'.format(a.arch))
+                print('\t\tnew arch {}'.format(new_net.arch))
+            for j in range(i[1] + 1, i[2] + 1):
+                if deep_debug:
+                    print('\t\tj {}'.format(j))
+                    print('\t\tidx {}'.format(idx))
+                    print('\t\tnew net layer at idx {}'.format(new_net.model.get_layer(index=idx)))
+                    print('\t\told net layer at j {}'.format(a.model.get_layer(index=j)))
+                    print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=j).get_weights()[1]).shape))
+                    print('\t\trest {}\n'.format(
+                        np.array(new_net.model.get_layer(index=idx).get_weights()[0]).shape)
+                    )
+                kernel_filter = a.model.get_layer(index=j).get_weights()[1]
+                new_weights = [new_net.model.get_layer(index=idx).get_weights()[0], kernel_filter]
+                new_net.model.get_layer(index=idx).set_weights(new_weights)
+                idx += 1
+            idx += 1  # for MaxPool
+
+        idx += 1  # Flatten
+        for i in drop_idxs:
+            a = nets[i[0]]
+            if deep_debug:
+                print('\tdense {}'.format(i))
+                print('\trange {}-{}\n'.format(i[1] + 1, i[2] + 1))
+            for j in range(i[1] + 2, i[2] + 2):
+                w_a = a.model.get_layer(index=j).get_weights()
+                w_n = new_net.model.get_layer(index=idx).get_weights()
+                if deep_debug:
+                    print('\t\t{}'.format(j))
+                    print('\t\tj {}'.format(j))
+                    print('\t\tidx {}'.format(idx))
+                    print('\t\ta_net layer {}'.format(a.model.get_layer(index=j)))
+                    print('\t\tnew_net layer {}'.format(new_net.model.get_layer(index=idx)))
+                    print('\t\tlen w_n[0]: {}'.format(len(w_n[0])))
+                    print('\t\tlen w_a[0]: {}'.format(len(w_a[0])))
+                    print('')
+                new_weights = np.array(w_a[0][:len(w_n[0])])
+                if len(w_a[0]) < len(w_n[0]):
+                    if deep_debug:
+                        print(new_weights.shape)
+                        print(np.array(w_n[0][len(new_weights):]).shape)
+                    new_weights = np.concatenate((new_weights, w_n[0][len(new_weights):]), axis=0)
+                new_weights = [new_weights, w_a[1]]
+
+                new_net.model.get_layer(index=idx).set_weights(new_weights)
+                idx += 1
+            idx += 1  # for Dropout
+        return new_net
 
     @staticmethod
     def _mutate_random(base_net, min_changes=2, max_changes=6):

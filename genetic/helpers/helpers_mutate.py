@@ -388,6 +388,35 @@ def __add_dense_drop(base_net, idx, dense_params, drop_params):
     )
 
 
+def __add_dense_drop_fast(base_net, idx, dense_params, drop_params):
+    # type: (Network, int, int, str) -> Network
+    new_arch = base_net.arch[:idx] + [dense_params] + [drop_params] + base_net.arch[idx:]
+
+    new_net = Network(
+        architecture=new_arch,
+        opt=base_net.opt,
+        activation=base_net.act,
+        callbacks=base_net.callbacks
+    )
+
+    if const.debug:
+        print('')
+        print('add_dense_drop: after adding dense')
+        print('Index of adding sequence: %d' % idx)
+        print('Old arch: {}'.format(base_net.arch))
+        print('New arch: {}'.format(new_arch))
+        print('')
+
+    dim_offset = 2 if len(const.input_shape.fget()) > 2 else 1
+    for i_l, l in enumerate(new_net.model.layers()[:idx + dim_offset - 1]):
+        l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
+
+    for i_l, l in enumerate(new_net.model.layers()[idx + dim_offset + 3:], start=idx + dim_offset):
+        l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
+
+    return new_net
+
+
 def remove_conv_max(base_net):
     # type: (Network) -> Network
     """
