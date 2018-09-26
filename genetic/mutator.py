@@ -83,7 +83,8 @@ class Mutator(object):
         :param use_generator: Whether to generate training data after each generation.
                 Make sure generator is specified (set_dataset_generator, or specify generator_f in constructor).
         :param generations: Number of generations.
-        :param save_all_nets: If true, saves all networks, after each generation. If true,  Overrides both save_each_generation.
+        :param save_all_nets: If true, saves all networks, after each generation.
+                If true, overrides both save_each_generation.
         :param save_each_generation_best: If true, saves the best network from each generation
                 in specified 'saving_dir'. If true, overrides save_best.
         :param save_best: If true, saves the best network at the end of lat generation.

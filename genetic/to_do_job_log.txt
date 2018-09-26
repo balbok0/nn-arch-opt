@@ -238,3 +238,5 @@ TODO: Learning rate sometimes blows up and is negative
 
 25/09: Make mode to save all networks, after each generation
     - Done, flag in evolve is save_all_nets
+
+TODO: Make add_conv_max/dense_drop faster, by not for-looping but cloning weights once, and rebuilding the net once.

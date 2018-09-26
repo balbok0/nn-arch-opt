@@ -373,22 +373,21 @@ class Network:
         }
 
     @staticmethod
-    def mutate(base_net_1, base_net_2, change_number_cap=3):
-        # type: (Network, Network, int) -> List[Network]
+    def mutate(base_net_1, base_net_2):
+        # type: (Network, Network) -> List[Network]
         """
         Creates and returns two new Networks, based on passed in parent Networks.
 
         :param base_net_1: A first parent network on which mutation is based.
         :param base_net_2: A second parent network on which mutation is based.
-        :param change_number_cap: Cap number of a random changes in case of random mutations.
         :return: List of 2 Networks, which are based on passed in parent Networks.
         """
         from program_variables.program_params import parent_to_rand_chance, parent_1_to_parent_2_chance
 
         if random.random() < parent_to_rand_chance:
             return [
-                Network._mutate_random(base_net_1, change_number_cap=change_number_cap),
-                Network._mutate_random(base_net_2, change_number_cap=change_number_cap)
+                Network._mutate_random(base_net_1),
+                Network._mutate_random(base_net_2)
             ]
 
         elif random.random() < parent_1_to_parent_2_chance:
@@ -532,8 +531,8 @@ class Network:
 
             # Bounds n_max_seq, and n_drop_seq, so they roughly satisfy the the layer bounds
             n_max_seq = min(n_max_seq, max_depth * (n_conv_per_seq * 1.0 / (n_conv_per_seq + 2)))
-            n_max_seq = max(n_max_seq, min_depth * (n_conv_per_seq * 1.0 / (n_conv_per_seq + 2)))
-            n_drop_seq = min(max_depth - n_max_seq, max(min_depth - n_max_seq, n_drop_seq))
+            n_max_seq = int(max(n_max_seq, min_depth * (n_conv_per_seq * 1.0 / (n_conv_per_seq + 2))))
+            n_drop_seq = int(min(max_depth - n_max_seq, max(min_depth - n_max_seq, n_drop_seq)))
 
             if debug:
                 print('\n_parent_mutate_2')

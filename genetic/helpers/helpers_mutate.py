@@ -218,7 +218,11 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
     new_model = base_net.model
 
     new_arch = new_arch[:idx] + ['max'] + new_arch[idx:]
-    new_model = helpers_other._insert_layer(new_model, helpers_other.arch_to_layer('max', activation=base_net.act), idx + 1)
+    new_model = helpers_other._insert_layer(
+        new_model,
+        helpers_other.arch_to_layer('max', activation=base_net.act),
+        idx + 1
+    )
     if const.debug:
         print('')
         print('__add_conv_max: outside for-loop')
