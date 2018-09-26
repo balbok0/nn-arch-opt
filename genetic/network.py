@@ -530,8 +530,8 @@ class Network:
             n_drop_seq = random.choice(n_drop_seq + [len(drop_seq_idx) - n_drop_seq[0], int(len(drop_seq_idx) / 2)])
 
             # Bounds n_max_seq, and n_drop_seq, so they roughly satisfy the the layer bounds
-            n_max_seq = min(n_max_seq, max_depth * (n_conv_per_seq * 1.0 / (n_conv_per_seq + 2)))
-            n_max_seq = int(max(n_max_seq, min_depth * (n_conv_per_seq * 1.0 / (n_conv_per_seq + 2))))
+            n_max_seq = min(n_max_seq, max_depth * ((n_conv_per_seq + 1.0) / (n_conv_per_seq + 3)))
+            n_max_seq = int(max(n_max_seq, min_depth * ((n_conv_per_seq + 1.0) / (n_conv_per_seq + 3))))
             n_drop_seq = int(min(max_depth - n_max_seq, max(min_depth - n_max_seq, n_drop_seq)))
 
             if debug:
@@ -548,13 +548,13 @@ class Network:
 
             max_idxs = []
             tmp = np.random.choice(np.arange(0, len(max_seq_idx), dtype='int'),
-                                   size=n_max_seq, replace=n_max_seq <= len(max_seq_idx))
+                                   size=n_max_seq, replace=n_max_seq > len(max_seq_idx))
             for i in tmp:
                 max_idxs.append(max_seq_idx[i])
 
             drop_idxs = []
             tmp = np.random.choice(np.arange(0, len(drop_seq_idx), dtype='int'),
-                                   size=n_drop_seq, replace=n_drop_seq <= len(drop_seq_idx))
+                                   size=n_drop_seq, replace=n_drop_seq > len(drop_seq_idx))
             for i in tmp:
                 drop_idxs.append(drop_seq_idx[i])
 
@@ -578,7 +578,9 @@ class Network:
                 print('\n_parent_mutate_2')
                 print('Net 1: {}'.format(base_net_1.arch))
                 print('Net 2: {}'.format(base_net_2.arch))
-                print('New net: {}\n'.format(new_net.arch))
+                print('New net: {}'.format(new_net.arch))
+                print('Len of new net: {}'.format(len(new_net.arch)))
+                print('')
 
             idx = 1
             for i in max_idxs:
@@ -588,11 +590,11 @@ class Network:
                     print('\trange {}-{}'.format(i[1] + 1, i[2] + 1))
                 for j in range(i[1] + 1, i[2] + 1):
                     if deep_debug:
-                        print('\t\t{}'.format(j))
-                        print('\t\t{}'.format(idx))
-                        print('\t\t{}'.format(new_net.model.layers))
-                        print('\t\t{}'.format(new_net.model.get_layer(index=idx)))
-                        print('\t\t{}'.format(a.model.get_layer(index=j)))
+                        print('\t\tj {}'.format(j))
+                        print('\t\tidx {}'.format(idx))
+                        print('\t\tnew_net layers {}'.format(new_net.model.layers))
+                        print('\t\tnew net layer at idx {}'.format(new_net.model.get_layer(index=idx)))
+                        print('\t\told net layer at j {}'.format(a.model.get_layer(index=j)))
                         print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=j).get_weights()[1]).shape))
                         print('\t\trest {}\n'.format(
                             np.array(new_net.model.get_layer(index=idx).get_weights()[0]).shape)
@@ -614,10 +616,12 @@ class Network:
                     w_n = new_net.model.get_layer(index=idx).get_weights()
                     if deep_debug:
                         print('\t\t{}'.format(j))
-                        print('\t\t a_net layer {}'.format(a.model.get_layer(index=j)))
-                        print('\t\t new_net layer {}'.format(new_net.model.get_layer(index=idx)))
-                        print('\t\t len w_n[0]: {}'.format(len(w_n[0])))
-                        print('\t\t len w_a[0]: {}'.format(len(w_a[0])))
+                        print('\t\tj {}'.format(j))
+                        print('\t\tidx {}'.format(idx))
+                        print('\t\ta_net layer {}'.format(a.model.get_layer(index=j)))
+                        print('\t\tnew_net layer {}'.format(new_net.model.get_layer(index=idx)))
+                        print('\t\tlen w_n[0]: {}'.format(len(w_n[0])))
+                        print('\t\tlen w_a[0]: {}'.format(len(w_a[0])))
                         print('')
                     new_weights = np.array(w_a[0][:len(w_n[0])])
                     if len(w_a[0]) < len(w_n[0]):

@@ -240,3 +240,11 @@ TODO: Learning rate sometimes blows up and is negative
     - Done, flag in evolve is save_all_nets
 
 TODO: Make add_conv_max/dense_drop faster, by not for-looping but cloning weights once, and rebuilding the net once.
+    - 26/09 - Done for conv_max. Tested, and working
+
+TODO: Bug, parent_2 layers do not match:
+    - 1: Net 1: [((5, 5), 16), ((5, 5), 16), ((5, 5), 16), 'max', ((5, 5), 8), ((5, 5), 8), ((5, 5), 8), 'max', ((3, 3), 16), 32, 32, 'drop0.60', 16, 'drop0.50', 128]
+         Net 2: [((3, 3), 16), ((3, 3), 16), ((3, 3), 16), 'max', ((5, 5), 8), ((5, 5), 8), ((5, 5), 8), 'max', ((5, 5), 8), 128, 64, 'drop0.70', 128, 'drop0.30', 128]
+         New net: [((5, 5), 8), ((5, 5), 8), ((5, 5), 8), ((5, 5), 16), ((5, 5), 16), ((5, 5), 16), 'max', ((5, 5), 8), ((5, 5), 8), ((5, 5), 8), 'max', ((5, 5), 8), ((5, 5), 8), ((5, 5), 8), 'max', ((3, 3), 16), ((5, 5), 8), ((5, 5), 8), ((5, 5), 8), 'max', 32, 32, 'drop0.60', 128, 64, 'drop0.70', 128, 16]
+
+TODO: Max_depth limit in parent_2 not working.

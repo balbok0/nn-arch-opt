@@ -129,3 +129,13 @@ def test_mutate_parent_2():
          32, 'drop0.30', 128, 'drop0.30', 32]
     )
     print([i.arch for i in Network._mutate_parent_2(n1, n2)])
+
+    n1 = Network(
+        [((5, 5), 16), ((5, 5), 16), ((5, 5), 16), 'max', ((5, 5), 8), ((5, 5), 8), ((5, 5), 8), 'max', ((3, 3), 16),
+         32, 32, 'drop0.60', 16, 'drop0.50', 128]
+    )
+    n2 = Network(
+        [((3, 3), 16), ((3, 3), 16), ((3, 3), 16), 'max', ((5, 5), 8), ((5, 5), 8), ((5, 5), 8), 'max', ((5, 5), 8),
+         128, 64, 'drop0.70', 128, 'drop0.30', 128]
+    )
+    print([i.arch for i in Network._mutate_parent_2(n1, n2)])

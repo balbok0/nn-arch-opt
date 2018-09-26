@@ -215,14 +215,16 @@ def add_conv_max(base_net, conv_num=const.n_conv_per_seq):
 def __add_conv_max(base_net, idx, conv_num, conv_params):
     # type: (Network, int, int, Tuple[Tuple[int, int], int]) -> Network
     new_arch = base_net.arch
-    new_model = base_net.model
 
-    new_arch = new_arch[:idx] + ['max'] + new_arch[idx:]
-    new_model = helpers_other._insert_layer(
-        new_model,
-        helpers_other.arch_to_layer('max', activation=base_net.act),
-        idx + 1
+    new_arch = new_arch[:idx] + [conv_params] * conv_num + ['max'] + new_arch[idx:]
+
+    new_net = Network(
+        architecture=new_arch,
+        opt=base_net.opt,
+        activation=base_net.act,
+        callbacks=base_net.callbacks
     )
+
     if const.debug:
         print('')
         print('__add_conv_max: outside for-loop')
@@ -231,27 +233,62 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
         print('New arch: {}'.format(new_arch))
         print('')
 
-    for l in range(conv_num):
-        new_arch = new_arch[:idx] + [conv_params] + new_arch[idx:]
+    new_first_dense, _ = helpers_other.find_first_dense(new_net.model)
+    old_first_dense, _ = helpers_other.find_first_dense(base_net.model)
 
+    for i_l, l in enumerate(new_net.model.layers[0:idx + 1]):  # + 1 due to Activation
+        old_l = base_net.model.get_layer(index=i_l)
         if const.deep_debug:
             print('')
-            print('__add_conv_max: inside for-loop')
-            print(new_model.layers)
-            print('New arch: {}'.format(new_arch))
+            print('__add_conv_max: inside for-loop till idx')
+            print('Old layer type: {}'.format(type(old_l)))
+            print('New layer type: {}'.format(type(l)))
+            print('Old layer weights len: {}'.format(len(old_l.get_weights())))
+            print('New layer weights len: {}'.format(len(l.get_weights())))
             print('')
+        l.set_weights(old_l.get_weights())
 
-        new_model = helpers_other._insert_layer(
-            new_model, helpers_other.arch_to_layer(conv_params, activation=base_net.act), idx + 1
-        )
+    print(new_net.model.get_layer(index=new_first_dense - 1))
 
-    return Network(
-        architecture=new_arch,
-        copy_model=new_model,
-        opt=base_net.opt,
-        activation=base_net.act,
-        callbacks=base_net.callbacks
+    for i_l, l in enumerate(new_net.model.layers[idx + 2 + conv_num:new_first_dense - 1], start=idx + 1):
+        from keras.layers import MaxPool2D
+
+        assert isinstance(base_net.model.get_layer(index=i_l), type(l))
+
+        if not isinstance(l, MaxPool2D):
+            if const.deep_debug:
+                print('')
+                print('__add_conv_max: inside for-loop since end of seq, to dense start')
+                print('Idx old: {}'.format(i_l))
+                print('idx new: {}'.format(1 + conv_num + i_l))
+                print('Old layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
+                print('New layer type: {}'.format(type(l)))
+                print('New layer weights len: {}'.format(len(l.get_weights())))
+                print('')
+            old_kernel = base_net.model.get_layer(index=i_l).get_weights()[1]
+            rand_kernel = l.get_weights()[1]
+            print(old_kernel.shape)
+            print(rand_kernel.shape)
+            l.set_weights([l.get_weights()[0]] + [old_kernel])
+
+    print(new_net.model.get_layer(index=new_first_dense).get_weights())
+
+    new_net.model.get_layer(index=new_first_dense).set_weights(
+        [new_net.model.get_layer(index=new_first_dense).get_weights()[0]] +
+        [base_net.model.get_layer(index=old_first_dense).get_weights()[1]]
     )
+
+    for i_l, l in enumerate(new_net.model.layers[new_first_dense + 1:],
+                            start=old_first_dense + 1):
+        if const.deep_debug:
+            print('')
+            print('__add_conv_max: inside for-loop since dense start till end')
+            print('Old layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
+            print('New layer type: {}'.format(type(l)))
+            print('')
+        l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
+
+    return new_net
 
 
 def add_dense_drop(base_net):
