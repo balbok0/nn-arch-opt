@@ -565,6 +565,8 @@ class Network:
                 a = archs[i[0]]
                 new_arch += a[i[1]:i[2] + 1]
 
+            # TODO:Split mutator_parent_2 here for a non-random part. (for testing and debugging)
+
             new_net = Network(
                 architecture=new_arch,
                 callbacks=random.choice([base_net_1.callbacks, base_net_2.callbacks]),

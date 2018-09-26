@@ -236,10 +236,11 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
     new_first_dense, _ = helpers_other.find_first_dense(new_net.model)
     old_first_dense, _ = helpers_other.find_first_dense(base_net.model)
 
-    for i_l, l in enumerate(new_net.model.layers[0:idx + 1]):  # + 1 due to Activation
+    for i_l, l in enumerate(new_net.model.layers[:idx + 1]):  # + 1 due to Activation
         old_l = base_net.model.get_layer(index=i_l)
         if const.deep_debug:
             print('')
+            print('Idx: {}'.format(i_l))
             print('__add_conv_max: inside for-loop till idx')
             print('Old layer type: {}'.format(type(old_l)))
             print('New layer type: {}'.format(type(l)))
@@ -247,8 +248,6 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
             print('New layer weights len: {}'.format(len(l.get_weights())))
             print('')
         l.set_weights(old_l.get_weights())
-
-    print(new_net.model.get_layer(index=new_first_dense - 1))
 
     for i_l, l in enumerate(new_net.model.layers[idx + 2 + conv_num:new_first_dense - 1], start=idx + 1):
         from keras.layers import MaxPool2D
@@ -271,8 +270,6 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
             print(rand_kernel.shape)
             l.set_weights([l.get_weights()[0]] + [old_kernel])
 
-    print(new_net.model.get_layer(index=new_first_dense).get_weights())
-
     new_net.model.get_layer(index=new_first_dense).set_weights(
         [new_net.model.get_layer(index=new_first_dense).get_weights()[0]] +
         [base_net.model.get_layer(index=old_first_dense).get_weights()[1]]
@@ -283,6 +280,8 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
         if const.deep_debug:
             print('')
             print('__add_conv_max: inside for-loop since dense start till end')
+            print('Idx old: {}'.format(i_l))
+            print('idx new: {}'.format(i_l + new_first_dense - old_first_dense))
             print('Old layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
             print('New layer type: {}'.format(type(l)))
             print('')
