@@ -575,6 +575,17 @@ class Network:
             a = archs[i[0]]
             new_arch += a[i[1]:i[2] + 1]
 
+        if debug:
+            print('\n_helper_parent_mutate_2')
+            print('Net 1: {}'.format(base_net_1.arch))
+            print('Net 2: {}'.format(base_net_2.arch))
+            print('max_idxs: {}'.format(max_idxs))
+            print('drop_idxs: {}'.format(drop_idxs))
+            print('New net: {}'.format(new_arch))
+            print('Len of new net: {}'.format(len(new_arch)))
+            print('')
+
+
         new_net = Network(
             architecture=new_arch,
             callbacks=random.choice([base_net_1.callbacks, base_net_2.callbacks]),
@@ -584,14 +595,6 @@ class Network:
 
         nets = [base_net_1, base_net_2]  # type: List[Network]
 
-        if debug:
-            print('\n_helper_parent_mutate_2')
-            print('Net 1: {}'.format(base_net_1.arch))
-            print('Net 2: {}'.format(base_net_2.arch))
-            print('New net: {}'.format(new_net.arch))
-            print('Len of new net: {}'.format(len(new_net.arch)))
-            print('')
-
         idx = 1
         for i in max_idxs:
             a = nets[i[0]]
@@ -599,8 +602,8 @@ class Network:
                 print('\tmax {}'.format(i))
                 print('\trange {}-{}'.format(i[1] + 1, i[2] + 1))
                 print('\told arch {}'.format(a.arch))
-                print('\t\tnew arch {}'.format(new_net.arch))
-            for j in range(i[1] + 1, i[2] + 1):
+                print('\tnew arch {}'.format(new_net.arch))
+            for j in range(i[1] + 1, i[2] + 2):
                 if deep_debug:
                     print('\t\tj {}'.format(j))
                     print('\t\tidx {}'.format(idx))
@@ -614,8 +617,8 @@ class Network:
                 new_weights = [new_net.model.get_layer(index=idx).get_weights()[0], kernel_filter]
                 new_net.model.get_layer(index=idx).set_weights(new_weights)
                 idx += 1
-            idx += 1  # for MaxPool
-
+        print(idx)
+        print(helpers_other.find_first_dense(new_net.model))
         idx += 1  # Flatten
         for i in drop_idxs:
             a = nets[i[0]]
