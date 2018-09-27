@@ -90,7 +90,7 @@ class Network:
 
             elif i_type == 'drop':
                 dense_started = True
-                if drop_prev or j == len(architecture) - 1:
+                if drop_prev:  # or j == len(architecture) - 1:
                     idx_to_remove = [j] + idx_to_remove
                 else:
                     try:
@@ -585,7 +585,6 @@ class Network:
             print('Len of new net: {}'.format(len(new_arch)))
             print('')
 
-
         new_net = Network(
             architecture=new_arch,
             callbacks=random.choice([base_net_1.callbacks, base_net_2.callbacks]),
@@ -604,50 +603,55 @@ class Network:
                 print('\told arch {}'.format(a.arch))
                 print('\tnew arch {}'.format(new_net.arch))
             for j in range(i[1] + 1, i[2] + 2):
-                if deep_debug:
-                    print('\t\tj {}'.format(j))
-                    print('\t\tidx {}'.format(idx))
-                    print('\t\tnew net layer at idx {}'.format(new_net.model.get_layer(index=idx)))
-                    print('\t\told net layer at j {}'.format(a.model.get_layer(index=j)))
-                    print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=j).get_weights()[1]).shape))
-                    print('\t\trest {}\n'.format(
-                        np.array(new_net.model.get_layer(index=idx).get_weights()[0]).shape)
-                    )
-                kernel_filter = a.model.get_layer(index=j).get_weights()[1]
-                new_weights = [new_net.model.get_layer(index=idx).get_weights()[0], kernel_filter]
-                new_net.model.get_layer(index=idx).set_weights(new_weights)
+                if isinstance(new_net.model.get_layer(index=idx), Conv2D):
+                    if deep_debug:
+                        print('\t\tj {}'.format(j))
+                        print('\t\tidx {}'.format(idx))
+                        print('\t\tnew net layer at idx {}'.format(new_net.model.get_layer(index=idx)))
+                        print('\t\told net layer at j {}'.format(a.model.get_layer(index=j)))
+                        print('\t\tfilter {}'.format(np.array(a.model.get_layer(index=j).get_weights()[1]).shape))
+                        print('\t\trest {}\n'.format(
+                            np.array(new_net.model.get_layer(index=idx).get_weights()[0]).shape)
+                        )
+                    kernel_filter = a.model.get_layer(index=j).get_weights()[1]
+                    new_weights = [new_net.model.get_layer(index=idx).get_weights()[0], kernel_filter]
+                    new_net.model.get_layer(index=idx).set_weights(new_weights)
                 idx += 1
+
+        print(new_net.model.get_layer(index=idx))
+        if isinstance(new_net.model.get_layer(index=idx), Flatten):
+            idx += 1  # Flatten
         print(idx)
         print(helpers_other.find_first_dense(new_net.model))
-        idx += 1  # Flatten
         for i in drop_idxs:
             a = nets[i[0]]
             if deep_debug:
                 print('\tdense {}'.format(i))
-                print('\trange {}-{}\n'.format(i[1] + 1, i[2] + 1))
-            for j in range(i[1] + 2, i[2] + 2):
-                w_a = a.model.get_layer(index=j).get_weights()
-                w_n = new_net.model.get_layer(index=idx).get_weights()
-                if deep_debug:
-                    print('\t\t{}'.format(j))
-                    print('\t\tj {}'.format(j))
-                    print('\t\tidx {}'.format(idx))
-                    print('\t\ta_net layer {}'.format(a.model.get_layer(index=j)))
-                    print('\t\tnew_net layer {}'.format(new_net.model.get_layer(index=idx)))
-                    print('\t\tlen w_n[0]: {}'.format(len(w_n[0])))
-                    print('\t\tlen w_a[0]: {}'.format(len(w_a[0])))
-                    print('')
-                new_weights = np.array(w_a[0][:len(w_n[0])])
-                if len(w_a[0]) < len(w_n[0]):
+                print('\trange {}-{}\n'.format(i[1], i[2]))
+            for j in range(i[1] + 2, i[2] + 3):
+                if isinstance(new_net.model.get_layer(index=idx), Dense):
+                    w_a = a.model.get_layer(index=j).get_weights()
+                    w_n = new_net.model.get_layer(index=idx).get_weights()
                     if deep_debug:
-                        print(new_weights.shape)
-                        print(np.array(w_n[0][len(new_weights):]).shape)
-                    new_weights = np.concatenate((new_weights, w_n[0][len(new_weights):]), axis=0)
-                new_weights = [new_weights, w_a[1]]
+                        print('\t\tj {}'.format(j))
+                        print('\t\tidx {}'.format(idx))
+                        print('\t\ta_net layer {}'.format(a.model.get_layer(index=j).get_config()))
+                        print('\t\tnew_net layer {}'.format(new_net.model.get_layer(index=idx).get_config()))
+                        print('\t\tlen w_n[0]: {}'.format(len(w_n[0])))
+                        print('\t\tlen w_n[1]: {}'.format(len(w_n[1])))
+                        print('\t\tlen w_a[0]: {}'.format(len(w_a[0])))
+                        print('\t\tlen w_a[1]: {}'.format(len(w_a[1])))
+                        print('')
+                    new_weights = np.array(w_a[0][:len(w_n[0])])
+                    if len(w_a[0]) < len(w_n[0]):
+                        if deep_debug:
+                            print(new_weights.shape)
+                            print(np.array(w_n[0][len(new_weights):]).shape)
+                        new_weights = np.concatenate((new_weights, w_n[0][len(new_weights):]), axis=0)
+                    new_weights = [new_weights, w_a[1]]
 
-                new_net.model.get_layer(index=idx).set_weights(new_weights)
+                    new_net.model.get_layer(index=idx).set_weights(new_weights)
                 idx += 1
-            idx += 1  # for Dropout
         return new_net
 
     @staticmethod

@@ -214,10 +214,7 @@ def add_conv_max(base_net, conv_num=const.n_conv_per_seq):
 
 def __add_conv_max(base_net, idx, conv_num, conv_params):
     # type: (Network, int, int, Tuple[Tuple[int, int], int]) -> Network
-    new_arch = base_net.arch
-
-    new_arch = new_arch[:idx] + [conv_params] * conv_num + ['max'] + new_arch[idx:]
-
+    new_arch = base_net.arch[:idx] + [conv_params] * conv_num + ['max'] + base_net.arch[idx:]
     new_net = Network(
         architecture=new_arch,
         opt=base_net.opt,
@@ -262,7 +259,6 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
                 print('idx new: {}'.format(1 + conv_num + i_l))
                 print('Old layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
                 print('New layer type: {}'.format(type(l)))
-                print('New layer weights len: {}'.format(len(l.get_weights())))
                 print('')
             old_kernel = base_net.model.get_layer(index=i_l).get_weights()[1]
             rand_kernel = l.get_weights()[1]
@@ -299,11 +295,11 @@ def add_dense_drop(base_net):
     :return: Copy of given network, with additional sequence inserted in a position of a random dropout layer,
                 or at the beginning of 1D computations in the model.
     """
-    drop_idx = [helpers_other.find_first_drop_dense_arch(base_net.arch) - 1]
+    drop_idx = [helpers_other.find_first_drop_dense_arch(base_net.arch)]
     idx = 0
     for l in base_net.arch:
         if helpers_other.arch_type(l) == 'drop':
-            drop_idx += [idx]
+            drop_idx += [idx + 1]  # Since it can be added after
         idx += 1
 
     if const.deep_debug:
@@ -330,66 +326,11 @@ def add_dense_drop(base_net):
 
 def __add_dense_drop(base_net, idx, dense_params, drop_params):
     # type: (Network, int, int, str) -> Network
-    new_arch = base_net.arch
-    new_model = base_net.model
-
-    if len(const.input_shape.fget()) > 2:
-        new_arch = new_arch[:idx + 1] + [dense_params] + new_arch[idx + 1:]
-        new_model = helpers_other._insert_layer(
-            new_model,
-            helpers_other.arch_to_layer(dense_params, activation=base_net.act),
-            idx + 3
-        )
-    else:
-        new_arch = new_arch[:idx + 1] + [dense_params] + new_arch[idx + 1:]
-        new_model = helpers_other._insert_layer(
-            new_model,
-            helpers_other.arch_to_layer(dense_params, activation=base_net.act),
-            idx + 2
-        )
-
-    if const.debug:
-        print('')
-        print('add_dense_drop: after adding dense')
-        print('Index of adding sequence: %d' % idx)
-        print('Old arch: {}'.format(base_net.arch))
-        print('New arch: {}'.format(new_arch))
-        print('')
-
-    if len(const.input_shape.fget()) > 2:
-        new_arch = new_arch[:idx + 2] + [drop_params] + new_arch[idx + 2:]
-        new_model = helpers_other._insert_layer(
-            new_model,
-            helpers_other.arch_to_layer(drop_params, activation=base_net.act),
-            idx + 4
-        )
-
-    else:
-        new_arch = new_arch[:idx + 2] + [drop_params] + new_arch[idx + 2:]
-        new_model = helpers_other._insert_layer(
-            new_model,
-            helpers_other.arch_to_layer(drop_params, activation=base_net.act),
-            idx + 3
-        )
-
-    if const.deep_debug:
-        print('')
-        print('add_dense_drop: at the end')
-        print('Old arch: {}'.format(base_net.arch))
-        print('New arch: {}'.format(new_arch))
-        print('')
-
-    return Network(
-        architecture=new_arch,
-        copy_model=new_model,
-        opt=base_net.opt,
-        activation=base_net.act,
-        callbacks=base_net.callbacks
-    )
-
-
-def __add_dense_drop_fast(base_net, idx, dense_params, drop_params):
-    # type: (Network, int, int, str) -> Network
+    if helpers_other.arch_type(base_net.arch[idx]) == 'drop':
+        from warnings import warn
+        warn('Invalid index given to __add_dense_drop. idx cannot point at place dropout layer in base_net.arch.\n'
+             'Adding 1 to idx, so this check will be satisfied.')
+        idx += 1
     new_arch = base_net.arch[:idx] + [dense_params] + [drop_params] + base_net.arch[idx:]
 
     new_net = Network(
@@ -408,10 +349,39 @@ def __add_dense_drop_fast(base_net, idx, dense_params, drop_params):
         print('')
 
     dim_offset = 2 if len(const.input_shape.fget()) > 2 else 1
-    for i_l, l in enumerate(new_net.model.layers()[:idx + dim_offset - 1]):
+    for i_l, l in enumerate(new_net.model.layers[:idx + dim_offset - 1]):
+        if const.deep_debug:
+            print('')
+            print('add_dense_drop inside for loop till idx')
+            print('Idx: {}'.format(i_l))
+            print('Old layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
+            print('New layer type: {}'.format(type(l)))
+            print('')
         l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
 
-    for i_l, l in enumerate(new_net.model.layers()[idx + dim_offset + 3:], start=idx + dim_offset):
+    from keras.layers import Dense
+
+    # if isinstance(new_net.model.get_layer(index=idx + dim_offset - 1), Dense):
+    #     new_net.model.get_layer(index=idx + dim_offset - 1).set_weights(
+    #         [base_net.model.get_layer(index=idx + dim_offset - 1).get_weights()[0]]
+    #         + [new_net.model.get_layer(index=idx + dim_offset - 1).get_weights()[1]]
+    #     )
+    #
+    # if isinstance(new_net.model.get_layer(index=idx + dim_offset + 2), Dense):
+    #     new_net.model.get_layer(index=idx + dim_offset + 2).set_weights(
+    #         [base_net.model.get_layer(index=idx + dim_offset).get_weights()[0]]
+    #         + [new_net.model.get_layer(index=idx + dim_offset + 2).get_weights()[1]]
+    #     )
+
+    for i_l, l in enumerate(new_net.model.layers[idx + dim_offset + 3:], start=idx + dim_offset + 1):
+        if const.deep_debug:
+            print('')
+            print('add_dense_drop inside for loop till end')
+            print('Idx old: {}'.format(i_l))
+            print('Idx_new: {}'.format(i_l + 3))
+            print('Old layer type: {}'.format(base_net.model.get_layer(index=i_l).get_config()))
+            print('New layer type: {}'.format(l.get_config()))
+            print('')
         l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
 
     return new_net
