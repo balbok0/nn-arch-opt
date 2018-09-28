@@ -91,7 +91,7 @@ class Network:
 
             elif i_type == 'drop':
                 dense_started = True
-                if drop_prev:  # or j == len(architecture) - 1:
+                if drop_prev or j == len(architecture) - 1:
                     idx_to_remove = [j] + idx_to_remove
                 else:
                     try:
