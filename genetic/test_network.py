@@ -48,9 +48,14 @@ def test_priv_add_dense_drop_seq():
     from helpers.helpers_mutate import __add_dense_drop
     from network import Network
 
+    n2 = Network([((3, 3), 16), ((3, 3), 16), ((3, 3), 8), ((3, 3), 8), ((3, 3), 8), 'max', 64, 'drop0.50', 16,
+                  'drop0.60', 128, 16, 'drop0.70', 16, 'drop0.40', 128, 'drop0.60'])
+    print(__add_dense_drop(n2, 6, 128, 'drop0.30'))
+
     n2 = Network(architecture=[((3, 3), 32), ((3, 3), 32), ((3, 3), 32), 'max', 30, 'drop0.4', 10])
     print(__add_dense_drop(n2, 4, 11, 'drop0.9').arch)
     print(__add_dense_drop(n2, 6, 11, 'drop0.9').arch)
+
     n2 = Network(architecture=[((7, 7), 16), 'max', 128])
     print(__add_dense_drop(n2, 2, 11, 'drop0.9').arch)
 

@@ -314,7 +314,7 @@ def add_dense_drop(base_net):
 
     if const.deep_debug:
         print('')
-        print('add_drop_dense')
+        print('add_drop_dense before private call')
         print('idx_add: {}'.format(idx_add))
         print('dense_params: {}'.format(dense_params))
         print('drop_params: {}'.format(drop_params))
@@ -342,7 +342,7 @@ def __add_dense_drop(base_net, idx, dense_params, drop_params):
 
     if const.debug:
         print('')
-        print('add_dense_drop: after adding dense')
+        print('__add_dense_drop: after adding dense')
         print('Index of adding sequence: %d' % idx)
         print('Old arch: {}'.format(base_net.arch))
         print('New arch: {}'.format(new_arch))
@@ -352,10 +352,10 @@ def __add_dense_drop(base_net, idx, dense_params, drop_params):
     for i_l, l in enumerate(new_net.model.layers[:idx + dim_offset - 1]):
         if const.deep_debug:
             print('')
-            print('add_dense_drop inside for loop till idx')
-            print('Idx: {}'.format(i_l))
-            print('Old layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
-            print('New layer type: {}'.format(type(l)))
+            print('__add_dense_drop inside for loop till idx')
+            print('\tIdx: {}'.format(i_l))
+            print('\tOld layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
+            print('\tNew layer type: {}'.format(type(l)))
             print('')
         l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
 
