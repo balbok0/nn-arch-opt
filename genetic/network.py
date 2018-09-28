@@ -651,7 +651,7 @@ class Network:
                 print('\tdense {}'.format(i))
                 print('\trange {}-{}\n'.format(i[1], i[2]))
             for j in range(i[1] + 2, i[2] + 3):
-                if isinstance(new_net.model.get_layer(index=idx), Dense):
+                if isinstance(new_net.model.get_layer(index=idx), Dense) and not idx >= len(new_net.model.layers) - 1:
                     w_a = a.model.get_layer(index=j).get_weights()
                     w_n = new_net.model.get_layer(index=idx).get_weights()
                     if deep_debug:
@@ -698,6 +698,7 @@ class Network:
                         print('')
             if isinstance(new_net.model.get_layer(index=idx), Dropout):
                 idx += 1
+
         return new_net
 
     @staticmethod
