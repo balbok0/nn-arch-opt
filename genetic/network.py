@@ -53,7 +53,7 @@ class Network:
         drop_prev = True
         max_prev = True
         idx_to_remove = []
-
+        print(architecture)
         for j in range(len(architecture)):
             i = architecture[j]
             i_type = helpers_other.arch_type(i)
@@ -85,6 +85,7 @@ class Network:
                         'The part of architecture which cause the problem is ' + str(i)
                     )
                 if max_prev:
+                    print(j)
                     idx_to_remove = [j] + idx_to_remove
                 max_prev = True
 
@@ -123,7 +124,7 @@ class Network:
                 )
 
         for idx in idx_to_remove:
-            architecture.pop(idx)
+            del architecture[idx]
 
         self.callbacks = callbacks  # type: List[Callback]
         if callbacks is None:
@@ -144,6 +145,7 @@ class Network:
         else:
             self.model = helpers_other.clone_model(copy_model, self.act, self.opt)
             assert helpers_other.assert_model_arch_match(self.model, self.arch)
+        print(self.arch)
 
     @staticmethod
     def __optimizer(opt_name, lr=None):
@@ -302,7 +304,9 @@ class Network:
 
         last_max_pool = True
         last_dropout = True
-        for i in self.arch:
+
+        idx_to_rmv = []
+        for idx, i in enumerate(self.arch):
             new_layer = helpers_other.arch_to_layer(i, self.act)
 
             if isinstance(new_layer, Conv2D):
@@ -317,13 +321,15 @@ class Network:
 
             elif isinstance(new_layer, MaxPool2D):
                 if not last_max_pool:
-                    if self.model.output_shape[1] > 2:  # asserts that there's not too many maxpools
+                    if min(self.model.output_shape[1:-1]) >= 2:  # asserts that there's not too many maxpools
                         self.model.add(new_layer)
                         last_max_pool = True
                     else:
-                        self.arch.remove(i)
+                        print('removed_max_idx: {}'.format(_))
+                        print('max shape: {}'.format(self.model.output_shape))
+                        idx_to_rmv = [idx] + idx_to_rmv
                 else:
-                    self.arch.remove(i)
+                    idx_to_rmv = [idx] + idx_to_rmv
 
             elif isinstance(new_layer, Dropout):
                 if not last_dropout:
@@ -335,7 +341,7 @@ class Network:
                         self.model.add(Dropout(rate=float(i[4:])))
                     last_dropout = True
                 else:
-                    self.arch.remove(i)
+                    idx_to_rmv = [idx] + idx_to_rmv
 
             else:
                 raise TypeError('Architecture is not correctly formatted.')
@@ -344,6 +350,9 @@ class Network:
             self.model.add(Flatten())
         self.model.add(Dense(units=output_shape.fget(), activation='sigmoid'))
         self.model.compile(optimizer=self.opt, loss='categorical_crossentropy', metrics=['accuracy'])
+
+        for i in idx_to_rmv:
+            del self.arch[i]
 
     def get_config(self):
         # type: () -> Dict[str, Any]
@@ -472,7 +481,7 @@ class Network:
         :param base_net_2: A second parent network on which mutation is based.
         :return: List of 2 Networks, both of which have features of both parent Networks.
         """
-        from program_variables.program_params import n_conv_per_seq, max_depth, min_depth
+        from program_variables.program_params import n_conv_per_seq, max_depth, min_depth, max_layers_limit
 
         new_nets = []
         for _ in range(2):
@@ -530,7 +539,8 @@ class Network:
             n_drop_seq = random.choice(n_drop_seq + [len(drop_seq_idx) - n_drop_seq[0], int(len(drop_seq_idx) / 2)])
 
             # Bounds n_max_seq, and n_drop_seq, so they roughly satisfy the the layer bounds
-            n_max_seq = min(n_max_seq, max_depth * ((n_conv_per_seq + 1.0) / (n_conv_per_seq + 3)))
+            n_max_seq = min(min(n_max_seq, max_depth * ((n_conv_per_seq + 1.0) / (n_conv_per_seq + 3))),
+                            max_layers_limit.fget())
             n_max_seq = int(max(n_max_seq, min_depth * ((n_conv_per_seq + 1.0) / (n_conv_per_seq + 3))))
             n_drop_seq = int(min(max_depth - n_max_seq, max(min_depth - n_max_seq, n_drop_seq)))
 
@@ -616,6 +626,15 @@ class Network:
                     kernel_filter = a.model.get_layer(index=j).get_weights()[1]
                     new_weights = [new_net.model.get_layer(index=idx).get_weights()[0], kernel_filter]
                     new_net.model.get_layer(index=idx).set_weights(new_weights)
+                    idx += 1
+                else:
+                    if deep_debug:
+                        print('')
+                        print('\t\tj {}'.format(j))
+                        print('\t\tidx {}'.format(idx))
+                        print('\t\tlayer type {}'.format(type(new_net.model.get_layer(index=idx))))
+                        print('')
+            if isinstance(new_net.model.get_layer(index=idx), MaxPool2D):
                 idx += 1
 
         print(new_net.model.get_layer(index=idx))
@@ -633,24 +652,48 @@ class Network:
                     w_a = a.model.get_layer(index=j).get_weights()
                     w_n = new_net.model.get_layer(index=idx).get_weights()
                     if deep_debug:
+                        print('\t\tprev_layer in a {}'.format(a.model.get_layer(index=j).get_config()))
                         print('\t\tj {}'.format(j))
                         print('\t\tidx {}'.format(idx))
                         print('\t\ta_net layer {}'.format(a.model.get_layer(index=j).get_config()))
                         print('\t\tnew_net layer {}'.format(new_net.model.get_layer(index=idx).get_config()))
-                        print('\t\tlen w_n[0]: {}'.format(len(w_n[0])))
-                        print('\t\tlen w_n[1]: {}'.format(len(w_n[1])))
-                        print('\t\tlen w_a[0]: {}'.format(len(w_a[0])))
-                        print('\t\tlen w_a[1]: {}'.format(len(w_a[1])))
-                        print('')
-                    new_weights = np.array(w_a[0][:len(w_n[0])])
+                        print('\t\tshape w_n[0]: {}'.format(w_n[0].shape))
+                        print('\t\tshape w_n[1]: {}'.format(w_n[1].shape))
+                        print('\t\tshape w_a[0]: {}'.format(w_a[0].shape))
+                        print('\t\tshape w_a[1]: {}'.format(w_a[1].shape))
+
+                    # Input can be different, but we can reuse as many weights as possible
+                    new_weights_0 = np.array(w_a[0][:len(w_n[0])])
                     if len(w_a[0]) < len(w_n[0]):
                         if deep_debug:
-                            print(new_weights.shape)
-                            print(np.array(w_n[0][len(new_weights):]).shape)
-                        new_weights = np.concatenate((new_weights, w_n[0][len(new_weights):]), axis=0)
-                    new_weights = [new_weights, w_a[1]]
+                            print('\t\t new_weights shape: {}'.format(new_weights_0.shape))
+                            print('\t\t w_n[0] add shape: {}'.format(np.array(w_n[0][len(new_weights_0):]).shape))
+                        new_weights_0 = np.concatenate((new_weights_0, w_n[0][len(new_weights_0):]), axis=0)
+
+                    # Output can be different, but we can reuse as many weights as possible
+                    new_weights_1 = np.array(w_a[1][:len(w_n[1])])
+                    if len(w_a[1]) < len(w_n[1]):
+                        if deep_debug:
+                            print(new_weights_1.shape)
+                            print(np.array(w_n[1][len(new_weights_1):]).shape)
+                        new_weights_1 = np.concatenate((new_weights_1, w_n[1][len(new_weights_1):]), axis=0)
+
+                    if deep_debug:
+                        print('\t\tlen new_weights[0]: {}'.format(len(new_weights_0)))
+                        print('\t\tlen new_weights[1]: {}'.format(len(new_weights_1)))
+
+                    new_weights = [new_weights_0, new_weights_1]
 
                     new_net.model.get_layer(index=idx).set_weights(new_weights)
+                    idx += 1
+                else:
+                    if deep_debug:
+                        print('')
+                        print('\t\tj {}'.format(j))
+                        print('\t\tidx {}'.format(idx))
+                        print('\t\tlayer type {}'.format(type(new_net.model.get_layer(index=idx))))
+                        print('')
+            if isinstance(new_net.model.get_layer(index=idx), Dropout):
                 idx += 1
         return new_net
 
