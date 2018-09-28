@@ -356,6 +356,10 @@ def __add_dense_drop(base_net, idx, dense_params, drop_params):
             print('\tIdx: {}'.format(i_l))
             print('\tOld layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
             print('\tNew layer type: {}'.format(type(l)))
+            print('\n\t BASE MODEL')
+            print(base_net.model.summary())
+            print('\n\t NEW MODEL')
+            print(new_net.model.summary())
             print('')
         l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
 
@@ -372,6 +376,18 @@ def __add_dense_drop(base_net, idx, dense_params, drop_params):
     #         [base_net.model.get_layer(index=idx + dim_offset).get_weights()[0]]
     #         + [new_net.model.get_layer(index=idx + dim_offset + 2).get_weights()[1]]
     #     )
+
+    if const.debug:
+        print('')
+        print('__add_dense_drop: after adding dense')
+        print('Index of adding sequence: %d' % idx)
+        print('Old arch: {}'.format(base_net.arch))
+        print('New arch: {}'.format(new_arch))
+        print('\n\t BASE MODEL')
+        print(base_net.model.summary())
+        print('\n\t NEW MODEL')
+        print(new_net.model.summary())
+        print('')
 
     for i_l, l in enumerate(new_net.model.layers[idx + dim_offset + 3:], start=idx + dim_offset + 1):
         if const.deep_debug:
