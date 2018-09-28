@@ -214,6 +214,9 @@ class Network:
 
         if debug:
             print(self.get_config())
+        if deep_debug:
+            print(self.arch)
+            self.model.summary()
 
         if validation_data is not None:
             self.model.fit(
