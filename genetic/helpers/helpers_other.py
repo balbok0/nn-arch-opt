@@ -87,9 +87,7 @@ def assert_model_arch_match(model, arch):
     """
     arch_idx = 0
     for l in model.layers[1:-1]:  # type: Layer
-        if isinstance(l, (Activation, Flatten)):
-            arch_idx -= 1
-        else:
+        if not isinstance(l, (Activation, Flatten)):
             if not arch[arch_idx] in layer_to_arch(l):
                 if const.debug:
                     print('assert_model_arch_match:')
@@ -103,7 +101,11 @@ def assert_model_arch_match(model, arch):
                     print('')
                 return False
 
-        arch_idx += 1
+            arch_idx += 1
+
+    # Asserts last layer is dense, and has shape of output.
+    assert layer_to_arch(model.layers[-1]) == const.output_shape.fget()
+
     return True
 
 

@@ -378,6 +378,10 @@ def __add_dense_drop(base_net, idx, dense_params, drop_params):
         print('Index of adding sequence: %d' % idx)
         print('Old arch: {}'.format(base_net.arch))
         print('New arch: {}'.format(new_arch))
+        print('\n\t BASE MODEL')
+        print(base_net.model.summary())
+        print('\n\t NEW MODEL')
+        print(new_net.model.summary())
         print('')
 
     dim_offset = 2 if len(const.input_shape.fget()) > 2 else 1
@@ -388,26 +392,71 @@ def __add_dense_drop(base_net, idx, dense_params, drop_params):
             print('\tIdx: {}'.format(i_l))
             print('\tOld layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
             print('\tNew layer type: {}'.format(type(l)))
-            print('\n\t BASE MODEL')
-            print(base_net.model.summary())
-            print('\n\t NEW MODEL')
-            print(new_net.model.summary())
+
             print('')
         l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
 
     from keras.layers import Dense
 
-    # if isinstance(new_net.model.get_layer(index=idx + dim_offset - 1), Dense):
-    #     new_net.model.get_layer(index=idx + dim_offset - 1).set_weights(
-    #         [base_net.model.get_layer(index=idx + dim_offset - 1).get_weights()[0]]
-    #         + [new_net.model.get_layer(index=idx + dim_offset - 1).get_weights()[1]]
-    #     )
-    #
-    # if isinstance(new_net.model.get_layer(index=idx + dim_offset + 2), Dense):
-    #     new_net.model.get_layer(index=idx + dim_offset + 2).set_weights(
-    #         [base_net.model.get_layer(index=idx + dim_offset).get_weights()[0]]
-    #         + [new_net.model.get_layer(index=idx + dim_offset + 2).get_weights()[1]]
-    #     )
+    if const.debug:
+        print('')
+        print('__add_dense_drop: after adding dense')
+        print('Index of adding sequence: %d' % idx)
+        print('Old arch: {}'.format(base_net.arch))
+        print('New arch: {}'.format(new_arch))
+        print('\n\t BASE MODEL')
+        print(base_net.model.summary())
+        print('\n\t NEW MODEL')
+        print(new_net.model.summary())
+        print('')
+
+    # 1st edge case, one before added sequence. Input matches, but output not necessarily.
+    if isinstance(new_net.model.get_layer(index=idx + dim_offset - 1), Dense):
+        w_a = base_net.model.get_layer(index=idx + dim_offset - 1).get_weights()
+        w_n = new_net.model.get_layer(index=idx + dim_offset - 1).get_weights()
+
+        new_weights_0 = np.array(w_a[0][:len(w_n[0])])
+        if len(w_a[0]) < len(w_n[0]):
+            if const.deep_debug:
+                print('\t\t new_weights shape: {}'.format(new_weights_0.shape))
+                print('\t\t w_n[0] add shape: {}'.format(np.array(w_n[0][len(new_weights_0):]).shape))
+            new_weights_0 = np.concatenate((new_weights_0, w_n[0][len(new_weights_0):]), axis=0)
+
+        # Output can be different, but we can reuse as many weights as possible
+        new_weights_1 = np.array(w_a[1][:len(w_n[1])])
+        if len(w_a[1]) < len(w_n[1]):
+            if const.deep_debug:
+                print(new_weights_1.shape)
+                print(np.array(w_n[1][len(new_weights_1):]).shape)
+            new_weights_1 = np.concatenate((new_weights_1, w_n[1][len(new_weights_1):]), axis=0)
+
+        new_net.model.get_layer(index=idx + dim_offset - 1).set_weights(
+            [new_weights_0, new_weights_1]
+        )
+
+    # 2nd edge case, one after added sequence. Output matches, but Input not necessarily.
+    if isinstance(new_net.model.get_layer(index=idx + dim_offset + 2), Dense):
+        w_a = base_net.model.get_layer(index=idx + dim_offset).get_weights()
+        w_n = new_net.model.get_layer(index=idx + dim_offset + 2).get_weights()
+
+        new_weights_0 = np.array(w_a[0][:len(w_n[0])])
+        if len(w_a[0]) < len(w_n[0]):
+            if const.deep_debug:
+                print('\t\t new_weights shape: {}'.format(new_weights_0.shape))
+                print('\t\t w_n[0] add shape: {}'.format(np.array(w_n[0][len(new_weights_0):]).shape))
+            new_weights_0 = np.concatenate((new_weights_0, w_n[0][len(new_weights_0):]), axis=0)
+
+        # Output can be different, but we can reuse as many weights as possible
+        new_weights_1 = np.array(w_a[1][:len(w_n[1])])
+        if len(w_a[1]) < len(w_n[1]):
+            if const.deep_debug:
+                print(new_weights_1.shape)
+                print(np.array(w_n[1][len(new_weights_1):]).shape)
+            new_weights_1 = np.concatenate((new_weights_1, w_n[1][len(new_weights_1):]), axis=0)
+
+        new_net.model.get_layer(index=idx + dim_offset + 2).set_weights(
+            [new_weights_0, new_weights_1]
+        )
 
     if const.debug:
         print('')
