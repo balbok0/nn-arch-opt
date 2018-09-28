@@ -27,6 +27,9 @@ def test_add_conv_max_seq():
 def test_priv_add_conv_max_seq():
     from helpers.helpers_mutate import __add_conv_max
     from network import Network
+    n2 = Network([((3, 3), 8), ((3, 3), 8), ((3, 3), 8), 'max', ((3, 3), 8), ((5, 5), 16), 16, 'drop0.70', 64, 'drop0.70', 32, 16,
+     'drop0.40', 16, 'drop0.70', 64, 'drop0.70', 32, 16, 'drop0.40'])
+    print(__add_conv_max(n2, 0, 3, ((5, 5), 16)).arch)
 
     n2 = Network(architecture=[((3, 3), 32), 'max', ((4, 4), 32), ((4, 4), 32), 'max', 30, 30, 'drop0.4', 10])
     print(__add_conv_max(n2, 0, 3, ((3, 3), 5)).arch)

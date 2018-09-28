@@ -222,12 +222,16 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
         callbacks=base_net.callbacks
     )
 
-    if const.debug:
+    if const.deep_debug:
         print('')
-        print('__add_conv_max: outside for-loop')
+        print('__add_dense_drop: after adding dense')
         print('Index of adding sequence: %d' % idx)
         print('Old arch: {}'.format(base_net.arch))
         print('New arch: {}'.format(new_arch))
+        print('\n\t BASE MODEL')
+        print(base_net.model.summary())
+        print('\n\t NEW MODEL')
+        print(new_net.model.summary())
         print('')
 
     new_first_dense, _ = helpers_other.find_first_dense(new_net.model)
@@ -245,6 +249,18 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
             print('New layer weights len: {}'.format(len(l.get_weights())))
             print('')
         l.set_weights(old_l.get_weights())
+
+    if const.deep_debug:
+        print('')
+        print('__add_dense_drop: after adding dense')
+        print('Index of adding sequence: %d' % idx)
+        print('Old arch: {}'.format(base_net.arch))
+        print('New arch: {}'.format(new_arch))
+        print('\n\t BASE MODEL')
+        print(base_net.model.summary())
+        print('\n\t NEW MODEL')
+        print(new_net.model.summary())
+        print('')
 
     for i_l, l in enumerate(new_net.model.layers[idx + 2 + conv_num:new_first_dense - 1], start=idx + 1):
         from keras.layers import MaxPool2D
@@ -270,6 +286,19 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
         [new_net.model.get_layer(index=new_first_dense).get_weights()[0]] +
         [base_net.model.get_layer(index=old_first_dense).get_weights()[1]]
     )
+
+    if const.deep_debug:
+        print('')
+        print('__add_dense_drop: after adding dense')
+        print('Index of adding sequence: %d' % idx)
+        print('Old arch: {}'.format(base_net.arch))
+        print('New arch: {}'.format(new_arch))
+        print('\n\t BASE MODEL')
+        print(base_net.model.summary())
+        print('\n\t NEW MODEL')
+        print(new_net.model.summary())
+        print('')
+
 
     for i_l, l in enumerate(new_net.model.layers[new_first_dense + 1:],
                             start=old_first_dense + 1):
