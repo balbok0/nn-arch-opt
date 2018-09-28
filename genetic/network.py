@@ -53,7 +53,7 @@ class Network:
         drop_prev = True
         max_prev = True
         idx_to_remove = []
-        print(architecture)
+
         for j in range(len(architecture)):
             i = architecture[j]
             i_type = helpers_other.arch_type(i)
@@ -145,7 +145,6 @@ class Network:
         else:
             self.model = helpers_other.clone_model(copy_model, self.act, self.opt)
             assert helpers_other.assert_model_arch_match(self.model, self.arch)
-        print(self.arch)
 
     @staticmethod
     def __optimizer(opt_name, lr=None):
@@ -328,8 +327,11 @@ class Network:
                         self.model.add(new_layer)
                         last_max_pool = True
                     else:
-                        print('removed_max_idx: {}'.format(idx))
-                        print('max shape: {}'.format(self.model.output_shape))
+                        if debug:
+                            print('\n__create_model')
+                            print('removed_max_idx: {}'.format(idx))
+                            print('max shape: {}'.format(self.model.output_shape))
+                            print('')
                         idx_to_rmv = [idx] + idx_to_rmv
                 else:
                     idx_to_rmv = [idx] + idx_to_rmv
@@ -640,11 +642,9 @@ class Network:
             if isinstance(new_net.model.get_layer(index=idx), MaxPool2D):
                 idx += 1
 
-        print(new_net.model.get_layer(index=idx))
         if isinstance(new_net.model.get_layer(index=idx), Flatten):
             idx += 1  # Flatten
-        print(idx)
-        print(helpers_other.find_first_dense(new_net.model))
+
         for i in drop_idxs:
             a = nets[i[0]]
             if deep_debug:

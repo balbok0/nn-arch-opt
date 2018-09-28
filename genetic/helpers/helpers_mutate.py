@@ -275,11 +275,15 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
                 print('idx new: {}'.format(1 + conv_num + i_l))
                 print('Old layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
                 print('New layer type: {}'.format(type(l)))
-                print('')
+
             old_kernel = base_net.model.get_layer(index=i_l).get_weights()[1]
             rand_kernel = l.get_weights()[1]
-            print(old_kernel.shape)
-            print(rand_kernel.shape)
+
+            if const.deep_debug:
+                print('Old kernel shape: {}'.format(old_kernel.shape))
+                print('New (randomly initialized, with correct shape) kernel shape: {}'.format(rand_kernel.shape))
+                print('')
+
             l.set_weights([l.get_weights()[0]] + [old_kernel])
 
     new_net.model.get_layer(index=new_first_dense).set_weights(
@@ -298,7 +302,6 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
         print('\n\t NEW MODEL')
         print(new_net.model.summary())
         print('')
-
 
     for i_l, l in enumerate(new_net.model.layers[new_first_dense + 1:],
                             start=old_first_dense + 1):
