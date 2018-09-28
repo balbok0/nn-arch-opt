@@ -104,7 +104,18 @@ def assert_model_arch_match(model, arch):
             arch_idx += 1
 
     # Asserts last layer is dense, and has shape of output.
-    assert layer_to_arch(model.layers[-1]) == const.output_shape.fget()
+    if not const.output_shape.fget() in layer_to_arch(model.layers[-1]):
+        if const.debug:
+            print('assert_model_arch_match:')
+            print('Arch: {}'.format(arch))
+            print('Arch idx: {}'.format(arch_idx))
+            for i in range(len(model.layers)):
+                print('\t{}\t{}'.format(i, model.layers[i].get_config()))
+            print('Arch at arch idx: {}'.format(arch[arch_idx]))
+            print('Layer at that corresponding place in model layers: {}'.format(layer_to_arch(l)))
+            print('Config of that layer {}'.format(l.get_config()))
+            print('')
+        return False
 
     return True
 
