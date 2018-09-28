@@ -325,7 +325,7 @@ class Network:
                         self.model.add(new_layer)
                         last_max_pool = True
                     else:
-                        print('removed_max_idx: {}'.format(_))
+                        print('removed_max_idx: {}'.format(idx))
                         print('max shape: {}'.format(self.model.output_shape))
                         idx_to_rmv = [idx] + idx_to_rmv
                 else:
