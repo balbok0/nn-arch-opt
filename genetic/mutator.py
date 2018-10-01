@@ -1,6 +1,7 @@
 import collections
 import os
 import random
+from math import isnan
 
 import numpy as np
 from keras import Model
@@ -60,21 +61,25 @@ class Mutator(object):
                validation_split=None,  # type: float
                use_generator=False,  # type: bool
                generations=20,  # type: int
+               train_once=None,  # type: bool
                save_all_nets=False,  # type: bool
                save_each_generation_best=True,  # type: bool
                saving_dir=None,  # type: str
                save_best=True,  # type: bool
-               epochs=2,  # type: int
+               verbose=0,  # type: int
+               epochs=1,  # type: int
                initial_epoch=0,  # type: int
-               batch_size=32,  # type: int
                shuffle='batch',  # type: str
-               verbose=0  # type: int
+               **kwargs
                ):
         # type: (...) -> Model
         """
         Main function of Mutator.\n
         Trains neural networks, and evolves them through generations, in order to find architecture, optimizer, etc.
         which allow for the best results given a dataset.
+
+        Additionally to all parameters described below, key-word arguments applicable to
+        `fit function <https://keras.io/models/model/#fit>`_ are available.
 
         :param x: Training input to the network.
         :param y: Expected training output of the network.
@@ -83,23 +88,30 @@ class Mutator(object):
         :param use_generator: Whether to generate training data after each generation.
                 Make sure generator is specified (set_dataset_generator, or specify generator_f in constructor).
         :param generations: Number of generations.
+        :param train_once: Whether a network should be trained only when it's created.<br>
+                In other words, if False, then it will train all networks at each generation.
+                If True,  will networks will be trained only on generation they were created.<br>
+                On default is True if use_generator is True, and False otherwise.
         :param save_all_nets: If true, saves all networks, after each generation.
                 If true, overrides both save_each_generation.
         :param save_each_generation_best: If true, saves the best network from each generation
                 in specified 'saving_dir'. If true, overrides save_best.
         :param save_best: If true, saves the best network at the end of lat generation.
-                Overrode by save_each_generation_best.
+                Overridden by save_each_generation_best.
         :param saving_dir: Directory to which models are saved.
         :param epochs: Number of epochs each network in each generation is trained.
         :param initial_epoch: Epoch at which training is supposed to get started.
-        :param batch_size: Look at keras.models.Model.fit function documentation.
-        :param shuffle: Look at keras.models.Model.fit function documentation.
-        :param verbose: Look at keras.models.Model.fit function documentation.
-                            Additionally, it specifies printing properties between generations.
+        :param shuffle: Look at keras.models.Model.fit function documentation. (Link above)
+        :param verbose: Look at keras.models.Model.fit function documentation. (Link above)
+                Additionally, it specifies printing properties between generations.
         :return: Keras Model of neural network, which was the best after the last generation,
                     with already trained weights.
         """
-        assert generations > 0
+        assert generations > 1
+        assert epochs > 0
+        assert initial_epoch >= 0
+
+        train_once = train_once or use_generator
 
         if validation_data is None:
             if validation_split is None:
@@ -144,10 +156,16 @@ class Mutator(object):
             for _, net in enumerate(self.networks):
                 if verbose > 0:
                     print('Network fit {}/{}'.format(_ + 1, len(self.networks)))
-                    print(epochs)
-                net.fit(x, y, validation_data, validation_split,
+
+                if train_once and not net.__times_trained > 0:
+                    if verbose > 0:
+                        print('Network skipped - It was already trained.')
+                else:
+                    net.fit(
+                        x, y, validation_data, validation_split,
                         epochs=epochs, initial_epoch=initial_epoch,
-                        batch_size=batch_size, shuffle=shuffle, verbose=verbose)
+                        shuffle=shuffle, verbose=verbose, **kwargs
+                    )
 
             log_save.print_message('Finished training for generation %d' % (i + 1))
 

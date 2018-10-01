@@ -136,7 +136,8 @@ class Network:
             self.opt = opt  # type: optimizers.Optimizer
         else:
             self.opt = self.__optimizer(opt, lr=lr)  # type: optimizers.Optimizer
-        self.__score = 0.  # type: float
+        self.__times_trained = 0  # type: int
+        self.__score = float('nan')  # type: float
         self.__prev_score = 0.  # type: float
         self.__prev_weights = None  # type: np.ndarray
         if copy_model is None:
@@ -207,9 +208,15 @@ class Network:
         Trains a network on a training set.
         For parameters descriptions look at documentation for keras.models.Model.fit function.
         """
-        self.__prev_score = self.__score
+        from math import isnan
+
+        # Resets score, so it will not collide w/ scoring it again (but w/ different weights).
+        self.__prev_score = 0. if isnan(self.__score) else self.__score
         self.__prev_weights = copy.deepcopy(self.model.get_weights())
-        self.__score = 0.  # Resets score, so it will not collide w/ scoring it again (but w/ different weights).
+        self.__score = float('nan')
+
+        initial_epoch = self.__times_trained * epochs + initial_epoch
+        epochs = (self.__times_trained + 1) * epochs
 
         if debug:
             print(self.get_config())
@@ -240,6 +247,7 @@ class Network:
                 initial_epoch=initial_epoch,
                 verbose=verbose
             )
+        self.__times_trained += 1
 
     def score(self, y_true, y_score, f=None):
         # type: (np.ndarray, np.ndarray, function) -> float
@@ -252,6 +260,7 @@ class Network:
         :return: Returns a score of this network on given function/metric.
         """
         import inspect
+        from math import isnan
 
         f = f or helpers_other.multi_roc_score
         try:
@@ -262,7 +271,7 @@ class Network:
         if not ('y_true' in args and 'y_score' in args):
             raise AttributeError('Given function f, should have parameters y_true and y_score.')
 
-        if self.__score == 0.0:
+        if isnan(self.__score):
             self.__score = f(y_true=y_true, y_score=y_score)
 
             if self.__score < self.__prev_score:

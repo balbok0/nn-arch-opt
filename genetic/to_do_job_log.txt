@@ -247,3 +247,6 @@ TODO: Make add/remove_conv_max/dense_drop faster, by not for-looping but cloning
     - What was happening was that in rare cases the either, the conv_max sequence wasn't ending with conv_max, or that
         there was to many max_pool layers (which is taken care of at network creation), but code still looped through it,
         thus making indexes of by 1.
+
+TODO: Multiple metrics in the Network
+    - score has to be a dict from function to float.
