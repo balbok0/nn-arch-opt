@@ -62,6 +62,12 @@ def test_priv_add_dense_drop_seq():
     n2 = Network(architecture=[((7, 7), 16), 'max', 128])
     print(__add_dense_drop(n2, 2, 11, 'drop0.9').arch)
 
+    n2 = Network(
+        [((3, 3), 16), ((7, 7), 16), 'max', ((3, 3), 16), ((3, 3), 16), ((3, 3), 16), 'max', ((3, 3), 8),
+         32, 'drop0.30', 128, 'drop0.30', 32]
+    )
+    print(__add_dense_drop(n2, 11, 32, 'drop0.70').arch)
+
 
 def test_rmv_conv_max_seq():
     from helpers.helpers_mutate import remove_conv_max
@@ -95,15 +101,15 @@ def test_rmv_dense_drop_seq():
     print(remove_dense_drop(n2).arch)
 
 
-def test_priv_dense_drop_seq():
-    from helpers.helpers_mutate import __add_dense_drop
+def test_priv_rmv_dense_drop_seq():
+    from helpers.helpers_mutate import __remove_dense_drop
     from network import Network
 
-    n2 = Network(
-        [((3, 3), 16), ((7, 7), 16), 'max', ((3, 3), 16), ((3, 3), 16), ((3, 3), 16), 'max', ((3, 3), 8),
-         32, 'drop0.30', 128, 'drop0.30', 32]
-    )
-    print(__add_dense_drop(n2, 11, 32, 'drop0.70').arch)
+    n2 = Network(architecture=[
+        ((3, 3), 32), 'max', ((3, 3), 32), ((3, 3), 32), 'max', 10, 'drop0.2', 20, 'drop0.3', 10
+    ])
+    print(__remove_dense_drop(n2, 6).arch)
+    print(__remove_dense_drop(n2, 8).arch)
 
 
 def test_mutate_parent():

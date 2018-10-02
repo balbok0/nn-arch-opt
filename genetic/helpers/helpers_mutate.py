@@ -250,18 +250,6 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
             print('')
         l.set_weights(old_l.get_weights())
 
-    if const.deep_debug:
-        print('')
-        print('__add_dense_drop: after adding dense')
-        print('Index of adding sequence: %d' % idx)
-        print('Old arch: {}'.format(base_net.arch))
-        print('New arch: {}'.format(new_arch))
-        print('\n\t BASE MODEL')
-        print(base_net.model.summary())
-        print('\n\t NEW MODEL')
-        print(new_net.model.summary())
-        print('')
-
     for i_l, l in enumerate(new_net.model.layers[idx + 2 + conv_num:new_first_dense - 1], start=idx + 1):
         from keras.layers import MaxPool2D
 
@@ -290,18 +278,6 @@ def __add_conv_max(base_net, idx, conv_num, conv_params):
         [new_net.model.get_layer(index=new_first_dense).get_weights()[0]] +
         [base_net.model.get_layer(index=old_first_dense).get_weights()[1]]
     )
-
-    if const.deep_debug:
-        print('')
-        print('__add_dense_drop: after adding dense')
-        print('Index of adding sequence: %d' % idx)
-        print('Old arch: {}'.format(base_net.arch))
-        print('New arch: {}'.format(new_arch))
-        print('\n\t BASE MODEL')
-        print(base_net.model.summary())
-        print('\n\t NEW MODEL')
-        print(new_net.model.summary())
-        print('')
 
     for i_l, l in enumerate(new_net.model.layers[new_first_dense + 1:],
                             start=old_first_dense + 1):
@@ -530,34 +506,82 @@ def remove_conv_max(base_net):
 
 def __remove_conv_max(base_net, idx_start, idx_end):
     # type: (Network, int, int) -> Network
-    new_model = base_net.model
     new_arch = base_net.arch[:idx_start] + base_net.arch[idx_end + 1:]
+
+    new_net = Network(
+        architecture=new_arch,
+        opt=base_net.opt,
+        activation=base_net.act,
+        callbacks=base_net.callbacks
+    )
 
     if const.debug:
         print('')
         print('__remove_conv_max')
         print('\told arch: {}'.format(base_net.arch))
         print('\tnew arch: {}'.format(new_arch))
-        print('\t{}'.format(new_model.layers))
         print('\tidx_start: {}'.format(idx_start))
         print('\tidx_end: {}'.format(idx_end))
         print('')
 
-    for i in range(idx_start, idx_end + 1):
+    new_first_dense, _ = helpers_other.find_first_dense(new_net.model)
+    old_first_dense, _ = helpers_other.find_first_dense(base_net.model)
+
+    for i_l, l in enumerate(new_net.model.layers[:idx_start + 1]):  # + 1 due to Activation
+        old_l = base_net.model.get_layer(index=i_l)
         if const.deep_debug:
             print('')
-            print('__remove_conv_max')
-            print('\t layer tb removed: {}'.format(base_net.arch[i + 1]))
+            print('Idx: {}'.format(i_l))
+            print('__remove_conv_max: inside for-loop till idx_start')
+            print('Old layer type: {}'.format(type(old_l)))
+            print('New layer type: {}'.format(type(l)))
+            print('Old layer weights len: {}'.format(len(old_l.get_weights())))
+            print('New layer weights len: {}'.format(len(l.get_weights())))
             print('')
-        new_model = helpers_other._remove_layer(new_model, idx_start + 1)
+        l.set_weights(old_l.get_weights())
 
-    return Network(
-        architecture=new_arch,
-        copy_model=new_model,
-        opt=base_net.opt,
-        activation=base_net.act,
-        callbacks=base_net.callbacks
+    for i_l, l in enumerate(new_net.model.layers[idx_start + 1:new_first_dense - 1], start=idx_end + 2):
+        from keras.layers import MaxPool2D
+
+        assert isinstance(base_net.model.get_layer(index=i_l), type(l))
+
+        if not isinstance(l, MaxPool2D):
+            if const.deep_debug:
+                print('')
+                print('__rmv_conv_max: inside for-loop since end of seq, to dense start')
+                print('Idx old: {}'.format(i_l))
+                print('idx new: {}'.format(i_l - idx_end - 1 + idx_start))
+                print('Old layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
+                print('New layer type: {}'.format(type(l)))
+
+            old_kernel = base_net.model.get_layer(index=i_l).get_weights()[1]
+            rand_kernel = l.get_weights()[1]
+
+            if const.deep_debug:
+                print('Old kernel shape: {}'.format(old_kernel.shape))
+                print('New (randomly initialized, with correct shape) kernel shape: {}'.format(rand_kernel.shape))
+                print('')
+
+            l.set_weights([l.get_weights()[0]] + [old_kernel])
+
+    new_net.model.get_layer(index=new_first_dense).set_weights(
+        [new_net.model.get_layer(index=new_first_dense).get_weights()[0]] +
+        [base_net.model.get_layer(index=old_first_dense).get_weights()[1]]
     )
+
+    for i_l, l in enumerate(new_net.model.layers[new_first_dense + 1:],
+                            start=old_first_dense + 1):
+        if const.deep_debug:
+            print('')
+            print('__rmv_conv_max: inside for-loop since dense start till end')
+            print('Idx old: {}'.format(i_l))
+            print('idx new: {}'.format(i_l + new_first_dense - old_first_dense))
+            print('Old layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
+            print('New layer type: {}'.format(type(l)))
+            print('')
+        l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
+
+    return new_net
 
 
 def remove_dense_drop(base_net):
@@ -585,6 +609,12 @@ def remove_dense_drop(base_net):
     else:
         curr_idx = 1
 
+    if const.debug:
+        print('')
+        print('remove_dense_drop')
+        print('drop_idxs: {}'.format(drop_idx))
+        print('')
+
     drop_arch_idx = drop_idx[curr_idx - 1]
 
     return __remove_dense_drop(base_net, drop_arch_idx)
@@ -592,61 +622,54 @@ def remove_dense_drop(base_net):
 
 def __remove_dense_drop(base_net, drop_idx):
     # type: (Network, int) -> Network
-    new_model = base_net.model
-    new_arch = base_net.arch
+    idx_start = drop_idx - 1
+    while helpers_other.arch_type(base_net.arch[idx_start]) == 'drop':
+        idx_start -= 1
+    idx_end = drop_idx
+
+    new_arch = base_net.arch[:idx_start] + base_net.arch[idx_end + 1:]
+    new_net = Network(
+        architecture=new_arch,
+        opt=base_net.opt,
+        activation=base_net.act,
+        callbacks=base_net.callbacks
+    )
 
     if const.debug:
         print('')
         print('__remove_dense_drop')
         print('Base arch: {}'.format(new_arch))
+        print('Idx start: {}'.format(idx_start))
+        print('Idx end: {}'.format(idx_end))
         print('Index of drop layer in arch: {}'.format(drop_idx))
-        print('Drop layer: {}'.format(new_arch[drop_idx]))
-        print('Layer before: {}'.format(new_arch[drop_idx - 1]))
+        print('Drop layer: {}'.format(base_net.arch[drop_idx]))
+        print('Layer before: {}'.format(base_net.arch[drop_idx - 1]))
         print('')
 
-    if len(const.input_shape.fget()) > 2:
-        net_offset = 1
-    else:
-        net_offset = 0
-
-    if helpers_other.arch_type(base_net.arch[drop_idx - 1]) == 'dense':  # Previous layer is dense.
+    dim_offset = 2 if len(const.input_shape.fget()) > 2 else 1
+    for i_l, l in enumerate(new_net.model.layers[:idx_start + dim_offset - 1]):
         if const.deep_debug:
             print('')
-            print('remove_dense_drop - 1st path (layer before is dense)')
-            print('')
-        new_model = helpers_other._remove_layer(new_model, drop_idx + net_offset + 1)
-        new_model = helpers_other._remove_layer(new_model, drop_idx + net_offset)
-        new_arch = new_arch[:drop_idx - 1] + new_arch[drop_idx + 1:]
+            print('__remove_dense_drop inside for loop till idx_start')
+            print('\tIdx: {}'.format(i_l))
+            print('\tOld layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
+            print('\tNew layer type: {}'.format(type(l)))
 
-    elif helpers_other.arch_type(base_net.arch[drop_idx - 1]) == 'drop':  # Previous layer is dropout.
+            print('')
+        l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
+
+    for i_l, l in enumerate(new_net.model.layers[idx_start + dim_offset + 2:], start=idx_end + dim_offset + 3):
         if const.deep_debug:
             print('')
-            print('remove_dense_drop - 2nd path (layer before is drop)')
-            print('')
-        new_model = helpers_other._remove_layer(new_model, drop_idx + 1 + net_offset)
-        new_model = helpers_other._remove_layer(new_model, drop_idx + net_offset)
-        lay_before = 2
-        while helpers_other.arch_type(base_net.arch[drop_idx - lay_before]) in ['dense', 'drop']:
-            new_model = helpers_other._remove_layer(new_model, drop_idx + 1 + net_offset - lay_before)
-            lay_before += 1
-            if helpers_other.arch_type(base_net.arch[drop_idx - lay_before + 1]) == 'dense':
-                break
-        new_arch = new_arch[:drop_idx - lay_before + 1] + new_arch[drop_idx + 1:]
-    else:
-        if const.deep_debug:
-            print('')
-            print('remove_dense_drop - 3rd path (layer before is something else)')
-            print('')
-        new_model = helpers_other._remove_layer(new_model, drop_idx + 1 + net_offset)
-        new_arch = new_arch[:drop_idx] + new_arch[drop_idx + 1:]
+            print('__remove_dense_drop inside for loop from idx_end till end')
+            print('\tIdx: {}'.format(i_l))
+            print('\tOld layer type: {}'.format(type(base_net.model.get_layer(index=i_l))))
+            print('\tNew layer type: {}'.format(type(l)))
 
-    return Network(
-        architecture=new_arch,
-        copy_model=new_model,
-        opt=base_net.opt,
-        activation=base_net.act,
-        callbacks=base_net.callbacks
-    )
+            print('')
+        l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
+
+    return new_net
 
 
 def add_arch_dense_drop(base_arch):

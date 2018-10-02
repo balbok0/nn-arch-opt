@@ -239,9 +239,12 @@ TODO: Learning rate sometimes blows up and is negative
 25/09: Make mode to save all networks, after each generation
     - Done, flag in evolve is save_all_nets
 
-TODO: Make add/remove_conv_max/dense_drop faster, by not for-looping but cloning weights once, and rebuilding the net once.
+TODO: Support for dropout to be the last layer in the arch.
+
+26/09-02/10: Make add/remove_conv_max/dense_drop faster, by not for-looping but cloning weights once, and rebuilding the net once.
     - 26/09 - Done for conv_max. Tested, and working
     - 26/09 - Started for dense_drop. For-loops working, in between assignment not.
+    - 02/10 - Made both remove functions, and tests for private remove_dense_drop.
 
 25-27/09: Bug. Index out of range in parent_mutate_2
     - What was happening was that in rare cases the either, the conv_max sequence wasn't ending with conv_max, or that
