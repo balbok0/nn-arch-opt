@@ -1,13 +1,14 @@
 import collections
 import os
 import random
-from math import isnan
+import inspect
 
 import numpy as np
 from keras import Model
 from typing import *
 
 from helpers.helpers_data import Array_Type
+from helpers_other import multi_roc_score
 import log_save
 from network import Network
 from program_variables import program_params as const
@@ -61,6 +62,7 @@ class Mutator(object):
                validation_split=None,  # type: float
                use_generator=False,  # type: bool
                generations=20,  # type: int
+               metric=None,  # type: function
                train_once=None,  # type: bool
                save_all_nets=False,  # type: bool
                save_each_generation_best=True,  # type: bool
@@ -88,6 +90,7 @@ class Mutator(object):
         :param use_generator: Whether to generate training data after each generation.
                 Make sure generator is specified (set_dataset_generator, or specify generator_f in constructor).
         :param generations: Number of generations.
+        :param metric: Metric used to score networks. In other words an accuracy function, which should be
         :param train_once: Whether a network should be trained only when it's created.<br>
                 In other words, if False, then it will train all networks at each generation.
                 If True,  will networks will be trained only on generation they were created.<br>
@@ -112,6 +115,10 @@ class Mutator(object):
         assert initial_epoch >= 0
 
         train_once = train_once or use_generator
+        metric = metric or multi_roc_score
+
+        # noinspection PyDeprecation
+        assert 'y_true' in inspect.getargspec(metric).args and 'y_score' in inspect.getargspec(metric).args
 
         if validation_data is None:
             if validation_split is None:
@@ -176,13 +183,13 @@ class Mutator(object):
 
             for net in self.networks:
                 tmp_nets += [net]
-                score = net.score(y_true=validation_data[1], y_score=net.predict(validation_data[0]))
+                score = net.score(y_true=validation_data[1], y_score=net.predict(validation_data[0]), f=metric)
                 tmp_scores += [score]
                 if best_net is None or score > best_score:
                     best_net = net
                     best_score = score
 
-            # Saves all networks, after their training, and evaluation.
+            # Saves all networks, after their training, and scoring.
             if save_all_nets:
                 gen_dir = '{}/gen_{:03d}/'.format(saving_dir, i + 1)
                 if not os.path.exists(gen_dir):
