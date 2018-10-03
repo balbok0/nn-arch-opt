@@ -453,9 +453,6 @@ def clone_model(base_model, new_act, new_opt):
     model = keras.models.clone_model(base_model)
     act = activations_function_calls[new_act]
 
-    while isinstance(model.layers[-2], Dropout):
-        model = _remove_layer(model, len(model.layers) - 2)
-
     prev = None
     idx = 1
     for l in model.layers[1:-1]:  # type: Layer
