@@ -117,6 +117,24 @@ def assert_model_arch_match(model, arch):
             print('')
         return False
 
+    idx = 1
+    for l in arch:
+        if isinstance(model.get_layer(index=idx), Flatten):
+            idx += 1
+
+        if l not in layer_to_arch(model.get_layer(index=idx)):
+            if const.debug:
+                print('assert_model_arch_match:')
+                print('Arch: {}'.format(arch))
+                print('Arch idx: {}'.format(arch_idx))
+                for i in range(len(model.layers)):
+                    print('\t{}\t{}'.format(i, model.get_layer(index=idx).get_config()))
+                print('Arch l: {}'.format(l))
+                print('Layer at idx: {}'.format(layer_to_arch(model.get_layer(index=idx))))
+                print('')
+            return False
+        idx += 1
+
     return True
 
 
