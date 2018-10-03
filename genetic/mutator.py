@@ -8,7 +8,7 @@ from keras import Model
 from typing import *
 
 from helpers.helpers_data import Array_Type
-from helpers_other import multi_roc_score
+from helpers.helpers_other import multi_roc_score
 import log_save
 from network import Network
 from program_variables import program_params as const

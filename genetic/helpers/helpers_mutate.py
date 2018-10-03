@@ -595,11 +595,9 @@ def remove_dense_drop(base_net):
     :return: A Network, based on base_net, but with a sequence of Dense layer and a Dropout layers removed.
     """
     drop_idx = []
-    idx = 0  # Since Activation layer is always first, and Flatten is before any Dropouts.
-    for l in base_net.arch:
+    for i_l, l in enumerate(base_net.arch):
         if helpers_other.arch_type(l) == 'drop':
-            drop_idx += [idx]
-        idx += 1
+            drop_idx += [i_l]
 
     if not drop_idx:
         return add_dense_drop(base_net)
@@ -657,6 +655,11 @@ def __remove_dense_drop(base_net, drop_idx):
 
             print('')
         l.set_weights(base_net.model.get_layer(index=i_l).get_weights())
+
+    print('Rest new: {}'.format(new_net.model.layers[idx_start + dim_offset + 2:]))
+    print('{}'.format(idx_start + dim_offset + 2))
+    print('Rest old: {}'.format(base_net.model.layers[idx_end + dim_offset + 3:]))
+    print('{}'.format(idx_end + dim_offset + 3))
 
     for i_l, l in enumerate(new_net.model.layers[idx_start + dim_offset + 2:], start=idx_end + dim_offset + 3):
         if const.deep_debug:
