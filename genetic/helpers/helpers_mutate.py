@@ -334,7 +334,7 @@ def add_dense_drop(base_net):
 
 def __add_dense_drop(base_net, idx, dense_params, drop_params):
     # type: (Network, int, int, str) -> Network
-    if helpers_other.arch_type(base_net.arch[idx]) == 'drop':
+    if idx < len(base_net.arch) and helpers_other.arch_type(base_net.arch[idx]) == 'drop':
         from warnings import warn
         warn('Invalid index given to __add_dense_drop. idx cannot point at place dropout layer in base_net.arch.\n'
              'Adding 1 to idx, so this check will be satisfied.')
