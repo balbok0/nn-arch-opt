@@ -13,7 +13,7 @@ min_depth = 10
 _mutations = {
     'kernel_size': [(3, 3), (5, 5)],
     'conv_filters': [8, 16],
-    'dropout': [0.3, 0.4, 0.5, 0.6, 0.7],
+    'dropout': [0.4, 0.5, 0.6],
     'dense_size': [16, 32, 64, 128],
     'optimizer': ['adam', 'sgd', 'nadam'],
     'optimizer_lr': [None, .0001, .0003, .001, .003, .01],

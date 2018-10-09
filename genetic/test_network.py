@@ -284,3 +284,27 @@ def test_priv_mutate_parent_2():
         [(0, 16, 16), (1, 10, 10), (0, 12, 13), (1, 5, 7)]
     ).arch
           )
+
+
+def test_save_load_net():
+    from network import Network
+    import shutil
+
+    n2 = Network([((3, 3), 8), ((3, 3), 8), ((3, 3), 8), 'max', 10, 11, 23])
+    n2.save_network('test/test_net')
+    n1 = Network.load_network('test/test_net')
+    shutil.rmtree('test/')
+    assert n1.arch == n2.arch
+
+
+def test_save_load_model():
+    from network import Network
+    import shutil
+
+    n2 = Network([((3, 3), 8), ((3, 3), 8), ((3, 3), 8), 'max', 10, 11, 23])
+    n2.save_model('test/test_net')
+    n1 = Network.load_model('test/test_net')
+    shutil.rmtree('test/')
+    print(n1.arch)
+    print(n2.arch)
+    assert n1.arch == n2.arch

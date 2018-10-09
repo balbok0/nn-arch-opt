@@ -232,14 +232,15 @@ TODO: Look for all github repos I was basing the code on.
 23/09: Github issue: https://github.com/keras-team/keras/issues/11212. For now created a get_l_p23_offset func in program_params for it
     - Done, problem was in outdated keras on squirrel.
 
-TODO: Learning rate sometimes blows up and is negative
+25/09: Learning rate sometimes blows up and is negative.
     - 25/09 - Seems like a an issue, which a lot of ppl have, since there's a lot of issues on keras' github.
                 One idea (another quick fix) is to keep track of it in the NaNSafer, which on epoch start could look at the opt's lr, and reset it to default if negative.
 
 25/09: Make mode to save all networks, after each generation
     - Done, flag in evolve is save_all_nets
 
-TODO: Support for dropout to be the last layer in the arch.
+03/10: Support for dropout to be the last layer in the arch.
+    - Fixed. Change was needed when copying over a model in creation of network.
 
 26/09-02/10: Make add/remove_conv_max/dense_drop faster, by not for-looping but cloning weights once, and rebuilding the net once.
     - 26/09 - Done for conv_max. Tested, and working
@@ -251,5 +252,13 @@ TODO: Support for dropout to be the last layer in the arch.
         there was to many max_pool layers (which is taken care of at network creation), but code still looped through it,
         thus making indexes of by 1.
 
-TODO: Multiple metrics in the Network
+TODO: Multiple metrics in the Network at the same time.
     - score has to be a dict from function to float.
+
+08-09/10: Save fn actually saves all the information stored in Network not only model.
+    - Make 4 fn's:
+        - save/load_net - For whole Network
+        - save/load_model - For only keras model
+
+    - 08/10 - implemented, not tested networks.
+    - 09/10 - added tests, made some fixes.

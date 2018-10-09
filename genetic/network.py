@@ -299,6 +299,147 @@ class Network:
         """
         self.model.save(filepath=file_path, overwrite=overwrite)
 
+    def save_model(self, file_path, overwrite=True):
+        # type: (str, bool) -> None
+        """
+        Given path, saves a keras model network.
+
+        :param file_path: A path to which model should be saved.
+        :param overwrite: Whether model should be overwritten or not.
+        """
+        import os
+        if len(file_path.split('/')) > 1 and not os.path.exists("/".join(file_path.split('/')[:-1])):
+            os.makedirs("/".join(file_path.split('/')[:-1]))
+
+        self.model.save(filepath=file_path, overwrite=overwrite, include_optimizer=True)
+
+    def save_network(self, file_path, overwrite=True):
+        # type: (str, bool) -> None
+        """
+        Given path, saves a network into two files named:
+        *. file_path + '_model.h5' for a model representation,
+        *. file_path + '_dict.p' for other parameters used to build a network.
+
+        :param file_path: A path to which network should be saved.
+        :param overwrite: Whether model should be overwritten or not.
+        """
+        import pickle
+        import os
+
+        if len(file_path.split('/')) > 1 and not os.path.exists("/".join(file_path.split('/')[:-1])):
+            os.makedirs("/".join(file_path.split('/')[:-1]))
+
+        if file_path[-3:] == '.h5':
+            file_path = file_path[:-3]
+        elif file_path[-2:] == '.p':
+            file_path = file_path[:-2]
+
+        self.save_model(file_path=file_path + '_model.h5', overwrite=overwrite)
+        basic_dict = self.get_config()
+        basic_dict['times_trained'] = self.__times_trained
+        basic_dict['prev_score'] = self.__prev_score
+        basic_dict['prev_weights'] = self.__prev_weights
+        with open(file_path + '_dict.p', 'wb') as f:
+            pickle.dump(basic_dict, f)
+
+    @staticmethod
+    def load_model(file_path):
+        # type: (str) -> Network
+        """
+
+
+        :param file_path:
+        :return:
+        """
+        from keras.models import load_model
+        model = load_model(file_path)  # type: Sequential
+        arch = []
+        for l in model.layers[:-1]:
+            arch_i = helpers_other.layer_to_arch(l)
+            arch += [arch_i[0]] if arch_i[0] is not None else []
+
+        return Network(architecture=arch, copy_model=model, opt=model.optimizer)
+
+    @staticmethod
+    def load_network(file_path=None, file_path_model=None, file_path_dict=None):
+        # type: (str, str, str) -> Network
+        """
+        Loads and returns an instance of network.
+
+        :param file_path: Basic path to 2 files. One pointing to keras model, should end with '_model.h5',
+                one pointing to dictionary with rest of specs should end with '_dict.p'.
+        :param file_path_model: Overwrites model part of file_path. Should point to file with keras model in it.
+        :param file_path_dict: Overwrites dictionary part of file_path.
+                Should point to file with dictionary, specifying network.
+        :return: Network specified by two files to which arguments are pointing to.
+        """
+        import pickle
+        from os.path import exists
+        from keras.models import load_model
+
+        if file_path is None and (file_path_model is None or file_path_dict is None):
+            raise AttributeError('Either file_path, or file_path_model and file_path_dict have to be set to not None.')
+
+        if file_path_model is None:
+            if file_path[-3:] == '.h5':
+                file_path = file_path[:-3]
+            elif file_path[-2:] == '.p':
+                file_path = file_path[:-2]
+            file_path_model = file_path + '_model.h5'
+
+        if file_path_dict is None:
+            if file_path[-3:] == '.h5':
+                file_path = file_path[:-3]
+            elif file_path[-2:] == '.p':
+                file_path = file_path[:-2]
+            file_path_dict = file_path + '_dict.p'
+
+        assert exists(file_path_dict)
+        assert exists(file_path_model)
+
+        model = load_model(file_path_model)
+        with open(file_path_dict, mode='rb') as f:
+            config_dict = pickle.load(f)
+        new_net = Network(
+            architecture=config_dict['architecture'],
+            copy_model=model,
+            opt=model.optimizer,
+            activation=config_dict['activation'],
+            callbacks=config_dict['callbacks']
+        )
+        new_net.__times_trained = config_dict['times_trained']
+        new_net.__prev_score = config_dict['prev_score']
+        new_net.__prev_weights = config_dict['prev_weights']
+        new_net.__score = config_dict['score']
+        return new_net
+
+    def get_config(self):
+        # type: () -> Dict[str, Any]
+        """
+        :return: A dictionary, which specifies configuration of this network. It contains:
+
+        #. architecture - a list of layers in a network.
+        #. optimizer - on which this network was trained.
+        #. activation - activation function on all of layers of this network.
+        #. score - score of this network, if function score was called beforehand. 0 otherwise.
+        #. callbacks - list of callbacks used while training this network.
+
+        """
+        opt_name = str(self.opt.__class__)
+        opt_name = opt_name[opt_name.index(".") + 1:]
+        opt_name = opt_name[:opt_name.index("\'")]
+        opt_name = opt_name[opt_name.index(".") + 1:]
+        return {
+            'architecture': self.arch,
+            'optimizer': '{opt} with learning rate: {lr}'.format(
+                opt=opt_name,
+                lr="{:.2g}".format(self.opt.get_config()['lr'])
+            ),
+            'activation': self.act,
+            'score': self.__score,
+            'callbacks': self.callbacks
+        }
+
     def __create_model(self):
         """
         With already set architecture, translates it into actual keras model.
@@ -367,33 +508,6 @@ class Network:
 
         for i in idx_to_rmv:
             del self.arch[i]
-
-    def get_config(self):
-        # type: () -> Dict[str, Any]
-        """
-        :return: A dictionary, which specifies configuration of this network. It contains:
-
-        #. architecture - a list of layers in a network.
-        #. optimizer - on which this network was trained.
-        #. activation - activation function on all of layers of this network.
-        #. score - score of this network, if function score was called beforehand. 0 otherwise.
-        #. callbacks - list of callbacks used while training this network.
-
-        """
-        opt_name = str(self.opt.__class__)
-        opt_name = opt_name[opt_name.index(".") + 1:]
-        opt_name = opt_name[:opt_name.index("\'")]
-        opt_name = opt_name[opt_name.index(".") + 1:]
-        return {
-            'architecture': self.arch,
-            'optimizer': '{opt} with learning rate: {lr}'.format(
-                opt=opt_name,
-                lr="{:.2g}".format(self.opt.get_config()['lr'])
-            ),
-            'activation': self.act,
-            'score': self.__score,
-            'callbacks': self.callbacks
-        }
 
     @staticmethod
     def mutate(base_net_1, base_net_2):
