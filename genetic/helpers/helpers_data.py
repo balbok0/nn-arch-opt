@@ -82,7 +82,7 @@ def prepare_data(dataset='colorflow', first_time=True):
            * 'Pythia Standard'
            * 'Pythia Vincia'
         * Signal 1 vs. Signal 2:
-           * 'Hgg_vs_Hqq'
+           * 'Hgg_vs_Hqq', followed by ' ' and either number of pixels. In example 25, or 50.
 
         If none are given default is 'Herwig Angular'.
 
@@ -141,8 +141,10 @@ def prepare_data(dataset='colorflow', first_time=True):
             from keras.utils.io_utils import HDF5Matrix
             from keras.utils.np_utils import to_categorical
 
-            fname = dataset.split('-')[1].strip() if len(dataset.split('-')) > 1 else 'Herwig Angular'
-            fname = get_ready_path(fname)
+            if len(dataset.split('-')) == 2:
+                fname = get_ready_path(dataset.split('-')[1].strip())
+            else:
+                fname = get_ready_path('Herwig Angular')
 
             # Data loading
             with h5.File(fname) as hf:
