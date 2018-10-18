@@ -16,25 +16,29 @@ def get_memory_size(hdf5_data_set, n_samples=None):
 
     :param hdf5_data_set: Dataset, from which images are used.
     :param n_samples: Number of images in a given dataset which memory cost is to be approximated.
-                        If None, number of images equals size of hdf5_data_set.
+                        If None, or <= 0, number of images equals size of hdf5_data_set.
     :return: Approximated size of whole array in RAM memory.
     """
-    if n_samples is None:
+    if n_samples is None or n_samples <= 0:
         n_samples = len(hdf5_data_set)
     first = hdf5_data_set[0][()]
     return n_samples * first.size * first.itemsize
 
 
-def __get_masks(x_shape, y):
-    # type: (Tuple[int], np.ndarray) -> (np.ndarray, np.ndarray)
+def __get_masks(x_shape, y, n_train=None):
+    # type: (Tuple[int], np.ndarray, int) -> (np.ndarray, np.ndarray)
     """
     Creates masks, which choose n_train random images after applying a mask.
+    If n_train <= 0, then masks of all true values are returned. If None, then are returned.
 
     :param x_shape: Shape of x dataset (images).
     :param y: True classes corresponding to images of dataset, which shape is given in x_shape.
-    :return: Two masks, first one for x part of dataset (images), another for y part of dataset (classes)
+    :return: Two masks, first one for x part of dataset (images), another for y part of dataset (classes).
     """
+    if n_train <= 0 or (n_train is None and const.n_train <= 0):
+        return np.full(shape=x_shape, fill_value=True, dtype=bool), np.full(shape=y.shape, fill_value=True, dtype=bool)
 
+    n_train = n_train or const.n_train
     all_indexes = defaultdict(list)  # type: Dict[int, List[int]]
     for i in range(len(y)):
         curr = int(y[i])
@@ -47,7 +51,7 @@ def __get_masks(x_shape, y):
 
     # Ratios split the whole dataset to ratios given class and first class.
     # Part scales these ratios up, so that, 'part' corresponds to size of first class.
-    part = const.n_train * 1. / sum(ratios.values())
+    part = n_train * 1. / sum(ratios.values())
     if part == 0:  # n_train is 0.
         part = len(y) * 1. / sum(ratios.values())
 

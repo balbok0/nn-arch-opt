@@ -94,7 +94,7 @@ class Mutator(object):
         :param train_once: Whether a network should be trained only when it's created.<br>
                 In other words, if False, then it will train all networks at each generation.
                 If True,  will networks will be trained only on generation they were created.<br>
-                On default is True if use_generator is True, and False otherwise.
+                On default is True if use_generator is False, and False otherwise.
         :param save_all_nets: If true, saves all networks, after each generation.
                 If true, overrides both save_each_generation.
         :param save_each_generation_best: If true, saves the best network from each generation
@@ -114,7 +114,7 @@ class Mutator(object):
         assert epochs > 0
         assert initial_epoch >= 0
 
-        train_once = train_once or use_generator
+        train_once = train_once or not use_generator
         metric = metric or multi_roc_score
 
         # noinspection PyDeprecation
