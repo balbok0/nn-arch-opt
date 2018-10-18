@@ -10,10 +10,11 @@ program_params.debug = True
 
 @deprecated
 def test_drop_last_in_arch():
-    from network import Network
-
-    n2 = Network(architecture=[((3, 3), 32), 'max', ((5, 5), 6), 32, 'drop0.4'], opt='sgd', activation='relu')
+    # from network import Network
+    #
+    # n2 = Network(architecture=[((3, 3), 32), 'max', ((5, 5), 6), 32, 'drop0.4'], opt='sgd', activation='relu')
     # assert not (isinstance(n2.arch[-1], str) and n2.arch[-1].startswith('drop'))
+    pass
 
 
 def test_add_conv_max_seq():

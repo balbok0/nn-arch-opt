@@ -170,17 +170,21 @@ def change_lr_schedule(base_net):
     )
 
 
-def add_conv_max(base_net, conv_num=const.n_conv_per_seq):
+def add_conv_max(base_net, conv_num=None):
     # type: (Network, int) -> Network
     """
     Adds a sequence of Convolutional layers, followed by MaxPool layer to a copy of a given Network.
 
     :param base_net: Network, which copy (with added sequence) will be returned.
-    :para: Shape of a singular x input to the Network.
     :param conv_num: Number of convolutional layers in a sequence.
+                Default value is a random choice from possibilities specified in mutations under 'n_conv' key, if there is only
+        one kernel size possible, or default number of convolution layers otherwise.
     :return: Copy of given network, with additional sequence inserted in a position of maxpool layer,
                 or at the beginning of the model.
     """
+    conv_num = conv_num or random.choice(const.mutations.fget()['n_conv']) \
+        if len(const.mutations.fget()['kernel_size']) == 1 else const.default_n_conv
+
     if len(const.input_shape.fget()) < 3:
         return add_dense_drop(base_net)
 
@@ -708,9 +712,20 @@ def add_arch_dense_drop(base_arch):
 
 
 def add_arch_conv_max(base_arch,  # type: List[Union[str, int, Tuple[Tuple[int, int], int]]]
-                      conv_num=const.n_conv_per_seq  # type int
+                      conv_num=None  # type int
                       ):
     # type: (...) -> List[Union[str, int, Tuple[Tuple[int, int], int]]]
+    """
+
+    :param base_arch: Network, which copy (with added sequence) will be returned.
+    :param conv_num: Number of convolutional layers in a sequence.
+        Default value is a random choice from possibilities specified in mutations under 'n_conv' key, if there is only
+        one kernel size possible, or default number of convolution layers otherwise.
+    :return: Copy of base_arch with conv_num number of conv layers, followed by max layer
+    """
+    conv_num = conv_num or random.choice(const.mutations.fget()['n_conv']) \
+        if len(const.mutations.fget()['kernel_size']) == 1 else const.default_n_conv
+
     if len(const.input_shape.fget()) < 3:
         return add_arch_dense_drop(base_arch)
 
@@ -730,9 +745,6 @@ def add_arch_conv_max(base_arch,  # type: List[Union[str, int, Tuple[Tuple[int, 
 
     new_arch = base_arch[:]
 
-    new_arch = new_arch[:idx] + ['max'] + new_arch[idx:]
-
-    for l in range(conv_num):
-        new_arch = new_arch[:idx] + [conv_params] + new_arch[idx:]
+    new_arch = new_arch[:idx] + conv_num * [conv_params] + ['max'] + new_arch[idx:]
 
     return new_arch

@@ -336,8 +336,8 @@ class Mutator(object):
 
         if len(const.input_shape.fget()) >= 3:
             # Convolution/Maxout part of architecture
-            while len(architecture) + const.n_conv_per_seq + 1 < \
-                    int(n_layers * (1.0 * const.n_conv_per_seq) / (const.n_conv_per_seq + 2)):
+            while len(architecture) + const.default_n_conv + 1 < \
+                    int(n_layers * (1.0 * const.default_n_conv) / (const.default_n_conv + 2)):
                 architecture = helpers_mutate.add_arch_conv_max(architecture)
 
         # Dense/Dropout part of architecture

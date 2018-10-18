@@ -112,8 +112,8 @@ def assert_model_arch_match(model, arch):
             for i in range(len(model.layers)):
                 print('\t{}\t{}'.format(i, model.layers[i].get_config()))
             print('Arch at arch idx: {}'.format(arch[arch_idx]))
-            print('Layer at that corresponding place in model layers: {}'.format(layer_to_arch(l)))
-            print('Config of that layer {}'.format(l.get_config()))
+            print('Layer at that corresponding place in model layers: {}'.format(layer_to_arch(model.layers[-1])))
+            print('Config of that layer {}'.format(model.layers[-1].get_config()))
             print('')
         return False
 

@@ -11,8 +11,9 @@ min_depth = 10
 
 # Mutation parameters
 _mutations = {
-    'kernel_size': [(3, 3), (5, 5)],
+    'kernel_size': [(3, 3)],
     'conv_filters': [8, 16],
+    'n_conv': [3, 5, 7],
     'dropout': [0.4, 0.5, 0.6],
     'dense_size': [16, 32, 64, 128],
     'optimizer': ['adam', 'sgd', 'nadam'],
@@ -22,7 +23,7 @@ _mutations = {
     'activation': ['relu', 'sigmoid', 'tanh']
 }
 
-n_conv_per_seq = 3
+default_n_conv = 3
 
 # Above this threshold mutations are parent ones, below are random. Range is (0, 1). Used in Mutator.
 # If set to 1, all mutations are random. If set to 0, all mutations are parent.

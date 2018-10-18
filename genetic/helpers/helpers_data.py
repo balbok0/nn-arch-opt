@@ -100,7 +100,7 @@ def prepare_data(dataset='colorflow', first_time=True):
 
     """
     if isinstance(dataset, str):
-        name = dataset.lower().split('-')[0]
+        name = dataset.lower().split('-')[0].strip()
 
         # Needed for typing.
         (_, _), (x_val, y_val) = (None, None), (None, None)  # type: Array_Type
@@ -140,6 +140,8 @@ def prepare_data(dataset='colorflow', first_time=True):
 
             from keras.utils.io_utils import HDF5Matrix
             from keras.utils.np_utils import to_categorical
+
+            import sklearn.utils
 
             if len(dataset.split('-')) == 2:
                 fname = get_ready_path(dataset.split('-')[1].strip())
@@ -192,13 +194,7 @@ def prepare_data(dataset='colorflow', first_time=True):
                     x_val = HDF5Matrix(fname, 'val/x')
                     y_val = to_categorical(HDF5Matrix(fname, 'val/y'), n_classes)
 
-                p = np.random.permutation(len(y_val))
-                y_val = y_val[p]
-                x_val = x_val[p]
-
-            p = np.random.permutation(len(y_train))
-            y_train = y_train[p]
-            x_train = x_train[p]
+            x_train, y_train = sklearn.utils.resample(x_train, y_train)
 
         else:
             raise AttributeError('Invalid name of dataset.')

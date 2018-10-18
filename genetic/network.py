@@ -609,7 +609,7 @@ class Network:
         :param base_net_2: A second parent network on which mutation is based.
         :return: List of 2 Networks, both of which have features of both parent Networks.
         """
-        from program_variables.program_params import n_conv_per_seq, max_depth, min_depth, max_layers_limit
+        from program_variables.program_params import default_n_conv, max_depth, min_depth, max_layers_limit
 
         new_nets = []
         for _ in range(2):
@@ -667,9 +667,9 @@ class Network:
             n_drop_seq = random.choice(n_drop_seq + [len(drop_seq_idx) - n_drop_seq[0], int(len(drop_seq_idx) / 2)])
 
             # Bounds n_max_seq, and n_drop_seq, so they roughly satisfy the the layer bounds
-            n_max_seq = min(min(n_max_seq, max_depth * ((n_conv_per_seq + 1.0) / (n_conv_per_seq + 3))),
+            n_max_seq = min(min(n_max_seq, max_depth * ((default_n_conv + 1.0) / (default_n_conv + 3))),
                             max_layers_limit.fget())
-            n_max_seq = int(max(n_max_seq, min_depth * ((n_conv_per_seq + 1.0) / (n_conv_per_seq + 3))))
+            n_max_seq = int(max(n_max_seq, min_depth * ((default_n_conv + 1.0) / (default_n_conv + 3))))
             n_drop_seq = int(min(max_depth - n_max_seq, max(min_depth - n_max_seq, n_drop_seq)))
 
             if debug:
@@ -855,11 +855,11 @@ class Network:
                 change_p += [7]
 
             if len(input_shape.fget()) > 2:
-                from program_variables.program_params import n_conv_per_seq
-                if len(base_net.arch) + n_conv_per_seq + 1 < max_depth:
+                from program_variables.program_params import default_n_conv
+                if len(base_net.arch) + default_n_conv + 1 < max_depth:
                     possible_changes += [helpers_mutate.add_conv_max]
                     change_p += [9]
-                if len(base_net.arch) - n_conv_per_seq + 1 > min_depth:
+                if len(base_net.arch) - default_n_conv + 1 > min_depth:
                     possible_changes += [helpers_mutate.remove_conv_max]
                     change_p += [7]
 
