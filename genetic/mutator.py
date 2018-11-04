@@ -130,7 +130,7 @@ class Mutator(object):
                 x = x[:split]
                 y = y[:split]
 
-        const.output_shape.fset(len(y[0]))
+        const.output_shape.fset(y.shape[0])
         const.input_shape.fset(x.shape[1:])
 
         if len(self.networks) < self.population_size:
@@ -164,7 +164,7 @@ class Mutator(object):
                 if verbose > 0:
                     print('Network fit {}/{}'.format(_ + 1, len(self.networks)))
 
-                if train_once and not net.__times_trained > 0:
+                if train_once and not net._times_trained > 0:
                     if verbose > 0:
                         print('Network skipped - It was already trained.')
                 else:
