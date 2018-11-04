@@ -31,7 +31,7 @@ parent_to_rand_chance = 0.3
 parent_1_to_parent_2_chance = 0.35
 
 # Dataset variables
-n_train = 50000
+n_train = 0
 
 # Development variables
 debug = True

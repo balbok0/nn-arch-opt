@@ -19,8 +19,10 @@ def get_memory_size(hdf5_data_set, n_samples=None):
                         If None, or <= 0, number of images equals size of hdf5_data_set.
     :return: Approximated size of whole array in RAM memory.
     """
-    if n_samples is None or n_samples <= 0:
+    n_samples = n_samples if n_samples is not None else const.n_train
+    if n_samples <= 0:
         n_samples = len(hdf5_data_set)
+
     first = hdf5_data_set[0][()]
     return n_samples * first.size * first.itemsize
 
@@ -29,16 +31,18 @@ def __get_masks(x_shape, y, n_train=None):
     # type: (Tuple[int], np.ndarray, int) -> (np.ndarray, np.ndarray)
     """
     Creates masks, which choose n_train random images after applying a mask.
-    If n_train <= 0, then masks of all true values are returned. If None, then are returned.
+    If n_train <= 0, then masks of all true values are returned.
+    If None, then are default number of images (defined in program_params) is returned.
 
     :param x_shape: Shape of x dataset (images).
     :param y: True classes corresponding to images of dataset, which shape is given in x_shape.
     :return: Two masks, first one for x part of dataset (images), another for y part of dataset (classes).
     """
-    if n_train <= 0 or (n_train is None and const.n_train <= 0):
+    n_train = n_train if n_train is not None else const.n_train
+
+    if n_train <= 0 or n_train > x_shape[0]:
         return np.full(shape=x_shape, fill_value=True, dtype=bool), np.full(shape=y.shape, fill_value=True, dtype=bool)
 
-    n_train = n_train or const.n_train
     all_indexes = defaultdict(list)  # type: Dict[int, List[int]]
     for i in range(len(y)):
         curr = int(y[i])
@@ -67,8 +71,8 @@ def __get_masks(x_shape, y, n_train=None):
     return indexes_x, indexes_y
 
 
-def prepare_data(dataset='colorflow', first_time=True):
-    # type: (str, bool) -> Tuple
+def prepare_data(dataset='colorflow', first_time=True, n_train=None):
+    # type: (str, bool, int) -> Tuple
     """
     Prepares a dataset of a choice, and returns it in form of pair of tuples, containing training and validation
     data-sets.
@@ -94,6 +98,9 @@ def prepare_data(dataset='colorflow', first_time=True):
         If called for the first time, should be 'True'.
         If not, can be avoided for better performance.
 
+    :param n_train: Number of training samples to be used. >= 0
+        If 0, or None, then default value of n_train is used.
+
     :return: (x_train, y_train), (x_val, y_val),
                each being of type np.ndarray, or HDF5Matrix, depending on memory space.
 
@@ -103,6 +110,7 @@ def prepare_data(dataset='colorflow', first_time=True):
     * y_val   - are actual results, against which nn can be checked how well it performs.
 
     """
+    assert n_train is None or n_train >= 0
     if isinstance(dataset, str):
         name = dataset.lower().split('-')[0].strip()
 
@@ -147,6 +155,8 @@ def prepare_data(dataset='colorflow', first_time=True):
 
             import sklearn.utils
 
+            n_train = n_train if n_train is not None else const.n_train
+
             if len(dataset.split('-')) == 2:
                 fname = get_ready_path(dataset.split('-')[1].strip())
             else:
@@ -158,28 +168,41 @@ def prepare_data(dataset='colorflow', first_time=True):
 
                 # Cap of training images (approximately).
                 memory_cost = 122 * 4  # Buffer for creating np array
-                memory_cost += get_memory_size(hf['train/x'], const.n_train)
-                memory_cost += 2 * get_memory_size(hf['train/y'], const.n_train)
+                memory_cost += get_memory_size(hf['train/x'], n_train)
+                memory_cost += 2 * get_memory_size(hf['train/y'], n_train)
 
                 indexes_x, indexes_y = __get_masks(hf['train/x'].shape, hf['train/y'][()])
 
             x_sing_shape = list(indexes_x.shape[1:])
+            if n_train == 0:
+                n_train = indexes_x.shape[0]
+
+            if const.debug:
+                print(n_train)
+                print("Memory Available for Training: {}".format(psutil.virtual_memory().available - psutil.virtual_memory().total * 0.15))
+                print("Memory Cost of Dataset: {}".format(memory_cost))
 
             # Available memory for training
             if memory_cost < psutil.virtual_memory().available - psutil.virtual_memory().total * 0.15:
                 with h5.File(fname) as hf:
                     x_train = np.array([])  # type: Array_Type
-                    for i in range(int(len(hf['train/x'])/const.n_train) + 1):
+                    for i in range(int(len(hf['train/x'])/n_train) + 1):
                         x_train = np.concatenate((x_train,
-                                                  hf['train/x'][i * const.n_train: (i + 1) * const.n_train]
-                                                  [indexes_x[i * const.n_train: (i + 1) * const.n_train]]))
+                                                  hf['train/x'][i * n_train: (i + 1) * n_train]
+                                                  [indexes_x[i * n_train: (i + 1) * n_train]]))
                     x_train = np.reshape(x_train, [int(len(x_train) / np.prod(x_sing_shape))] + x_sing_shape)
                     y_train = to_categorical(hf['train/y'][indexes_y], n_classes)  # type: Array_Type
 
             else:  # data too big for memory.
-                x_train = HDF5Matrix(fname, 'train/x')[indexes_x]  # type: Array_Type
+                if n_train == indexes_x.shape[0]:
+                    x_train = HDF5Matrix(fname, 'train/x')
+                else:
+                    x_train = HDF5Matrix(fname, 'train/x')[indexes_x]  # type: Array_Type
                 x_train = np.reshape(x_train, [int(len(x_train) / np.prod(x_sing_shape))] + x_sing_shape)
                 y_train = to_categorical(HDF5Matrix(fname, 'train/y')[indexes_y], n_classes)  # type: Array_Type
+
+            if const.debug:
+                print("Memory Available for Validation: {}".format(psutil.virtual_memory().available - psutil.virtual_memory().total * 0.15))
 
             if first_time:
                 with h5.File(fname) as hf:
@@ -198,7 +221,10 @@ def prepare_data(dataset='colorflow', first_time=True):
                     x_val = HDF5Matrix(fname, 'val/x')
                     y_val = to_categorical(HDF5Matrix(fname, 'val/y'), n_classes)
 
-            x_train, y_train = sklearn.utils.resample(x_train, y_train)
+            if const.debug:
+                print("Memory before Resample: {}".format(psutil.virtual_memory().available - psutil.virtual_memory().total * 0.15))
+                x_train, y_train = sklearn.utils.resample(x_train, y_train)
+                print("Memory After Resample: {}".format(psutil.virtual_memory().available - psutil.virtual_memory().total * 0.15))
 
         else:
             raise AttributeError('Invalid name of dataset.')

@@ -114,7 +114,7 @@ class Mutator(object):
         assert epochs > 0
         assert initial_epoch >= 0
 
-        train_once = train_once or not use_generator
+        train_once = train_once if isinstance(train_once, bool) else not use_generator
         metric = metric or multi_roc_score
 
         # noinspection PyDeprecation

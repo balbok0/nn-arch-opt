@@ -95,7 +95,8 @@ TODO: Check the size of the training dataset: https://github.com/36000/cnn_color
                 it would return weights to ones before epoch, and stop learning.
     - 07/09 - Quick fix applied. It's called NaN looker, and if there is NaN in loss, the weights return to value before the epoch began.
                 A deeper study in what is the problem would be nice to do. Also try None values for lr.
-    - TODO: Upload NaN on github and make a stack exchange/keras github issue on it.
+    - Sept. - Upload NaN on github and make a stack exchange/keras github issue on it.
+                A general problem was with versions not matching. However, as Callback is kept to avoid problems in future.
 
 17/07: Investigate why dropout at the end of arch is legal. It's shouldn't be.
     - Done, added 'or j == len(architecture) - 1' in __init__ of network. Also added a test, in the test_network.
@@ -262,3 +263,7 @@ TODO: Multiple metrics in the Network at the same time.
 
     - 08/10 - implemented, not tested networks.
     - 09/10 - added tests, made some fixes.
+
+TODO: Add TensorBoard to default callbacks, for nice visualization (make a bool?)
+
+TODO: Add clustering to prepare data, when generator is used (i.e. n_train != 0, None)
