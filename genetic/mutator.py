@@ -130,7 +130,7 @@ class Mutator(object):
                 x = x[:split]
                 y = y[:split]
 
-        const.output_shape.fset(y.shape[0])
+        const.output_shape.fset(y.shape[1])
         const.input_shape.fset(x.shape[1:])
 
         if len(self.networks) < self.population_size:
