@@ -136,7 +136,7 @@ class Network:
             self.opt = opt  # type: optimizers.Optimizer
         else:
             self.opt = self.__optimizer(opt, lr=lr)  # type: optimizers.Optimizer
-        self._times_trained = 0  # type: int
+        self.times_trained = 0  # type: int
         self.__score = float('nan')  # type: float
         self.__prev_score = 0.  # type: float
         self.__prev_weights = None  # type: np.ndarray
@@ -215,8 +215,8 @@ class Network:
         self.__prev_weights = copy.deepcopy(self.model.get_weights())
         self.__score = float('nan')
 
-        initial_epoch = self._times_trained * epochs + initial_epoch
-        epochs = (self._times_trained + 1) * epochs
+        initial_epoch = self.times_trained * epochs + initial_epoch
+        epochs = (self.times_trained + 1) * epochs
 
         if debug:
             print(self.get_config())
@@ -247,7 +247,7 @@ class Network:
                 initial_epoch=initial_epoch,
                 verbose=verbose
             )
-        self._times_trained += 1
+        self.times_trained += 1
 
     def score(self, y_true, y_score, f=None):
         # type: (np.ndarray, np.ndarray, function) -> float
@@ -336,7 +336,7 @@ class Network:
 
         self.save_model(file_path=file_path + '_model.h5', overwrite=overwrite)
         basic_dict = self.get_config()
-        basic_dict['times_trained'] = self._times_trained
+        basic_dict['times_trained'] = self.times_trained
         basic_dict['prev_score'] = self.__prev_score
         basic_dict['prev_weights'] = self.__prev_weights
         with open(file_path + '_dict.p', 'wb') as f:
@@ -407,7 +407,7 @@ class Network:
             activation=config_dict['activation'],
             callbacks=config_dict['callbacks']
         )
-        new_net._times_trained = config_dict['times_trained']
+        new_net.times_trained = config_dict['times_trained']
         new_net.__prev_score = config_dict['prev_score']
         new_net.__prev_weights = config_dict['prev_weights']
         new_net.__score = config_dict['score']

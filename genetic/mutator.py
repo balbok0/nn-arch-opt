@@ -164,7 +164,7 @@ class Mutator(object):
                 if verbose > 0:
                     print('Network fit {}/{}'.format(_ + 1, len(self.networks)))
 
-                if train_once and not net._times_trained > 0:
+                if train_once and net.times_trained > 0:
                     if verbose > 0:
                         print('Network skipped - It was already trained.')
                 else:
